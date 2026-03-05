@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CharmSync System</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+  <!-- Firebase modular CDN -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    // ===== FIREBASE CONFIG =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgO6Tig6uWBdrEGFuCRcS45SC5rQ5nEyI",
+      authDomain: "charmsync.firebaseapp.com",
+      projectId: "charmsync",
+      storageBucket: "charmsync.firebasestorage.app",
+      messagingSenderId: "109688788362",
+      appId: "1:109688788362:web:21f4e2e5b379613fbca473",
+      measurementId: "G-NCMVBS4Q08"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===== SAVE QR MESSAGE TO FIRESTORE =====
+    async function saveMessage(message){
+      try{
+        const docRef = await addDoc(collection(db, "qrMessages"), {
+          text: message,
+          createdAt: serverTimestamp()
+        });
+        console.log("QR message saved with ID:", docRef.id);
+        alert("Message saved successfully!");
+      } catch(error){
+        console.error("Error saving QR message:", error);
+        alert("Failed to save message. Check console.");
+      }
+    }
+
+    // ===== GENERATE QR =====
+    function generateQR(){
+      const message = document.getElementById("message").value.trim();
+      if(!message){
+        alert("Please enter a message!");
+        return;
+      }
+
+      // Display QR
+      document.getElementById("qrcode").innerHTML = "";
+      new QRCode(document.getElementById("qrcode"),{
+        text: message,
+        width: 200,
+        height: 200
+      });
+
+      // Save to Firebase
+      saveMessage(message);
+    }
+
+    // ===== ENTER KEY SUPPORT =====
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("message");
+      input.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          generateQR();
+        }
+      });
+    });
+
+    // ===== PAGE SWITCH =====
+    function showPage(page){
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.getElementById(page).classList.add("active");
+    }
+
+    window.showPage = showPage;
+    window.generateQR = generateQR;
+
+    // ===== BRACELET SETUP =====
+    const totalBeads = 14;
+    const radius = 130;
+    const center = 160;
+
+    const beadImages = [
+      "images/bead1.png",
+      "images/bead2.png",
+      "images/bead3.png",
+      "images/bead4.png"
+    ];
+
+    function setupBracelet(){
+      const bracelet = document.getElementById("bracelet");
+      bracelet.innerHTML = "";
+
+      for(let i=0;i<totalBeads;i++){
+        let bead = document.createElement("div");
+        bead.className = "bead";
+
+        let beadImage = beadImages[i % beadImages.length];
+        bead.style.backgroundImage = `url(${beadImage})`;
+
+        // Circular layout
+        let angle = (i / totalBeads) * 2 * Math.PI;
+        let x = center + radius * Math.cos(angle) - 20;
+        let y = center + radius * Math.sin(angle) - 20;
+        bead.style.left = x + "px";
+        bead.style.top = y + "px";
+
+        // Click to change bead image and save
+        bead.addEventListener("click", async ()=>{
+          let newImage = prompt("Enter bead image URL:", beadImage);
+          if(newImage){
+            bead.style.backgroundImage = `url(${newImage})`;
+            beadImage = newImage;
+
+            try{
+              const docRef = await addDoc(collection(db,"bracelets"), {
+                beadIndex: i,
+                imageUrl: beadImage,
+                updatedAt: serverTimestamp()
+              });
+              console.log("Bead saved with ID:", docRef.id);
+            }catch(error){
+              console.error("Error saving bead:", error);
+            }
+          }
+        });
+
+        bracelet.appendChild(bead);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", setupBracelet);
+
+  </script>
+
+  <style>
+    body{
+      margin:0;
+      font-family:Arial;
+      display:flex;
+      height:100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      width:220px;
+      background:#222;
+      color:white;
+      padding:20px;
+    }
+
+    .sidebar h2{
+      text-align:center;
+    }
+
+    .sidebar button{
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border:none;
+      background:#444;
+      color:white;
+      cursor:pointer;
+    }
+
+    .sidebar button:hover{
+      background:#666;
+    }
+
+    /* MAIN CONTENT */
+    .main{
+      flex:1;
+      padding:40px;
+    }
+
+    /* PAGES */
+    .page{
+      display:none;
+    }
+
+    .active{
+      display:block;
+    }
+
+    /* BRACELET */
+    .bracelet{
+      position:relative;
+      width:320px;
+      height:320px;
+      margin-top:40px;
+    }
+
+    .bead{
+      position:absolute;
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      border:2px solid #999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-weight:bold;
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>CharmSync</h2>
+    <button onclick="showPage('qrPage')">Generate QR</button>
+    <button onclick="showPage('braceletPage')">Bracelet Preview</button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <!-- QR GENERATOR PAGE -->
+    <div id="qrPage" class="page active">
+      <h2>Generate Message QR</h2>
+      <input type="text" id="message" placeholder="Enter message" style="padding:10px;width:300px">
+      <br><br>
+      <button onclick="generateQR()">Generate & Save QR</button>
+      <div id="qrcode" style="margin-top:20px"></div>
+    </div>
+
+    <!-- BRACELET PAGE -->
+    <div id="braceletPage" class="page">
+      <h2>Bracelet Visualization</h2>
+      <p>Click beads to customize design</p>
+      <div class="bracelet" id="bracelet"></div>
+    </div>
+  </div>
+</body>
+</html>
