@@ -1,16 +1,488 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CharmSync System</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CharmSync - Create Memory Charms</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
-  <!-- Firebase modular CDN -->
+  <style>
+    :root {
+      --rose-gold: #E8B4A8;
+      --deep-rose: #C89FA5;
+      --lavender: #B4A8E8;
+      --cream: #FAF8F3;
+      --charcoal: #2A2A2A;
+      --soft-shadow: 0 8px 30px rgba(200, 159, 165, 0.15);
+      --glow: 0 0 40px rgba(232, 180, 168, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: linear-gradient(135deg, var(--cream) 0%, #FFF5F0 100%);
+      min-height: 100vh;
+      color: var(--charcoal);
+      overflow-x: hidden;
+    }
+
+    /* Floating particles background */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, var(--rose-gold), transparent);
+      border-radius: 50%;
+      animation: float 15s infinite ease-in-out;
+      opacity: 0.3;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+      50% { transform: translate(30px, -50px) scale(1.5); opacity: 0.5; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(232, 180, 168, 0.2);
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .logo h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--rose-gold), var(--lavender));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .logo p {
+      font-size: 13px;
+      color: var(--deep-rose);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .nav-btn {
+      width: 100%;
+      padding: 18px 24px;
+      margin-bottom: 12px;
+      border: none;
+      background: transparent;
+      color: var(--charcoal);
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(232, 180, 168, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .nav-btn:hover::before {
+      left: 100%;
+    }
+
+    .nav-btn:hover {
+      background: rgba(232, 180, 168, 0.15);
+      transform: translateX(4px);
+    }
+
+    .nav-btn.active {
+      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
+      color: white;
+      box-shadow: var(--soft-shadow);
+    }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      padding: 60px 80px;
+      max-width: 900px;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--deep-rose);
+      margin-bottom: 50px;
+      line-height: 1.6;
+    }
+
+    /* Form styling */
+    .form-group {
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--charcoal);
+      margin-bottom: 12px;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 16px 24px;
+      border: 2px solid var(--rose-gold);
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: var(--charcoal);
+    }
+
+    .toggle-btn:hover {
+      background: rgba(232, 180, 168, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .toggle-btn.active {
+      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
+      color: white;
+      border-color: var(--rose-gold);
+      box-shadow: var(--soft-shadow);
+    }
+
+    input[type="text"],
+    input[type="datetime-local"],
+    textarea {
+      width: 100%;
+      padding: 18px 20px;
+      border: 2px solid rgba(232, 180, 168, 0.3);
+      border-radius: 12px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px;
+      background: white;
+      transition: all 0.3s ease;
+      color: var(--charcoal);
+    }
+
+    input[type="text"]:focus,
+    input[type="datetime-local"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 0 4px rgba(232, 180, 168, 0.1);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .date-input-wrapper {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 0;
+    }
+
+    .date-input-wrapper.show {
+      max-height: 120px;
+      opacity: 1;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 12px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--soft-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .primary-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .primary-btn:hover::after {
+      width: 300px;
+      height: 300px;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(200, 159, 165, 0.3);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+    }
+
+    /* QR Code display */
+    .qr-container {
+      margin-top: 40px;
+      padding: 40px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--soft-shadow);
+      text-align: center;
+      display: none;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    .qr-container.show {
+      display: block;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #qrcode {
+      display: inline-block;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    #qrcode img {
+      border-radius: 8px;
+    }
+
+    .qr-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .secondary-btn {
+      padding: 12px 28px;
+      border: 2px solid var(--rose-gold);
+      background: white;
+      color: var(--charcoal);
+      border-radius: 10px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .secondary-btn:hover {
+      background: var(--rose-gold);
+      color: white;
+    }
+
+    /* Bracelet styling */
+    .bracelet-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 60px;
+    }
+
+    .bracelet {
+      position: relative;
+      width: 360px;
+      height: 360px;
+      animation: gentleRotate 30s infinite linear;
+    }
+
+    @keyframes gentleRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .bracelet::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 280px;
+      border: 2px dashed rgba(232, 180, 168, 0.3);
+      border-radius: 50%;
+    }
+
+    .bead {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 3px solid var(--rose-gold);
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(200, 159, 165, 0.3);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .bead:hover {
+      transform: scale(1.3);
+      box-shadow: 0 8px 25px rgba(200, 159, 165, 0.5), var(--glow);
+      z-index: 10;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Success message */
+    .success-msg {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, var(--rose-gold), var(--lavender));
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(200, 159, 165, 0.4);
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .success-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        padding: 20px;
+      }
+
+      .main {
+        padding: 30px 20px;
+      }
+
+      h2 {
+        font-size: 32px;
+      }
+    }
+  </style>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-    // ===== FIREBASE CONFIG =====
     const firebaseConfig = {
       apiKey: "AIzaSyBgO6Tig6uWBdrEGFuCRcS45SC5rQ5nEyI",
       authDomain: "charmsync.firebaseapp.com",
@@ -21,68 +493,154 @@
       measurementId: "G-NCMVBS4Q08"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ===== SAVE QR MESSAGE TO FIRESTORE =====
-    async function saveMessage(message){
-      try{
-        const docRef = await addDoc(collection(db, "qrMessages"), {
+    let messageType = 'instant'; // 'instant' or 'locked'
+
+    // Save message with optional unlock date
+    async function saveMessage(message, unlockDateStr = null) {
+      try {
+        const messageData = {
           text: message,
           createdAt: serverTimestamp()
-        });
-        console.log("QR message saved with ID:", docRef.id);
-        alert("Message saved successfully!");
-      } catch(error){
-        console.error("Error saving QR message:", error);
-        alert("Failed to save message. Check console.");
+        };
+
+        // Only add unlockAt if it's a locked message
+        if (unlockDateStr) {
+          messageData.unlockAt = new Date(unlockDateStr);
+        }
+
+        const docRef = await addDoc(collection(db, "qrMessages"), messageData);
+        console.log("Message saved with ID:", docRef.id);
+        return docRef.id;
+      } catch (error) {
+        console.error("Error saving message:", error);
+        showNotification("Failed to save message. Please try again.", false);
+        return null;
       }
     }
 
-    // ===== GENERATE QR =====
-    function generateQR(){
+    // Generate QR code
+    async function generateQR() {
       const message = document.getElementById("message").value.trim();
-      if(!message){
-        alert("Please enter a message!");
+      const unlockDate = document.getElementById("unlockDate").value;
+
+      if (!message) {
+        showNotification("Please enter a message!", false);
         return;
       }
 
-      // Display QR
+      if (messageType === 'locked' && !unlockDate) {
+        showNotification("Please select an unlock date!", false);
+        return;
+      }
+
+      const docId = await saveMessage(
+        message, 
+        messageType === 'locked' ? unlockDate : null
+      );
+
+      if (!docId) return;
+
+      const qrUrl = `https://charmsync.web.app/view.html?id=${docId}`;
+
+      // Generate QR code
       document.getElementById("qrcode").innerHTML = "";
-      new QRCode(document.getElementById("qrcode"),{
-        text: message,
-        width: 200,
-        height: 200
+      new QRCode(document.getElementById("qrcode"), {
+        text: qrUrl,
+        width: 220,
+        height: 220,
+        colorDark: "#2A2A2A",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
       });
 
-      // Save to Firebase
-      saveMessage(message);
+      document.querySelector('.qr-container').classList.add('show');
+      
+      showNotification(
+        messageType === 'instant' 
+          ? "✨ QR Code created! Message will show instantly." 
+          : "🔒 QR Code created! Message locked until the set date."
+      );
     }
 
-    // ===== ENTER KEY SUPPORT =====
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("message");
-      input.addEventListener("keydown", (e) => {
-        if(e.key === "Enter"){
-          generateQR();
-        }
+    // Download QR code
+    window.downloadQR = function() {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (!canvas) return;
+      
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.download = 'charmsync-qr.png';
+      link.href = url;
+      link.click();
+      
+      showNotification("QR Code downloaded!");
+    };
+
+    // Copy URL
+    window.copyURL = function() {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (!canvas) return;
+      
+      // Get the QR data URL from the QRCode library
+      const qrData = canvas.toDataURL();
+      const tempInput = document.createElement('input');
+      tempInput.value = document.querySelector('#qrcode img')?.getAttribute('src') || qrData;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      
+      showNotification("URL copied to clipboard!");
+    };
+
+    // Show notification
+    function showNotification(message, isSuccess = true) {
+      const notification = document.createElement('div');
+      notification.className = 'success-msg';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.classList.add('show'), 10);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // Toggle message type
+    window.setMessageType = function(type) {
+      messageType = type;
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
       });
-    });
+      event.target.classList.add('active');
 
-    // ===== PAGE SWITCH =====
-    function showPage(page){
-      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-      document.getElementById(page).classList.add("active");
-    }
+      const dateWrapper = document.querySelector('.date-input-wrapper');
+      if (type === 'locked') {
+        dateWrapper.classList.add('show');
+      } else {
+        dateWrapper.classList.remove('show');
+      }
+    };
 
-    window.showPage = showPage;
+    // Page navigation
+    window.showPage = function(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    };
+
     window.generateQR = generateQR;
 
-    // ===== BRACELET SETUP =====
+    // Bracelet setup
     const totalBeads = 14;
-    const radius = 130;
-    const center = 160;
+    const radius = 140;
+    const center = 180;
 
     const beadImages = [
       "images/bead1.png",
@@ -91,40 +649,41 @@
       "images/bead4.png"
     ];
 
-    function setupBracelet(){
+    function setupBracelet() {
       const bracelet = document.getElementById("bracelet");
+      if (!bracelet) return;
+      
       bracelet.innerHTML = "";
 
-      for(let i=0;i<totalBeads;i++){
+      for (let i = 0; i < totalBeads; i++) {
         let bead = document.createElement("div");
         bead.className = "bead";
 
         let beadImage = beadImages[i % beadImages.length];
         bead.style.backgroundImage = `url(${beadImage})`;
+        bead.style.animationDelay = `${i * 0.1}s`;
 
-        // Circular layout
-        let angle = (i / totalBeads) * 2 * Math.PI;
-        let x = center + radius * Math.cos(angle) - 20;
-        let y = center + radius * Math.sin(angle) - 20;
+        let angle = (i / totalBeads) * 2 * Math.PI - Math.PI / 2;
+        let x = center + radius * Math.cos(angle) - 24;
+        let y = center + radius * Math.sin(angle) - 24;
         bead.style.left = x + "px";
         bead.style.top = y + "px";
 
-        // Click to change bead image and save
-        bead.addEventListener("click", async ()=>{
+        bead.addEventListener("click", async () => {
           let newImage = prompt("Enter bead image URL:", beadImage);
-          if(newImage){
+          if (newImage) {
             bead.style.backgroundImage = `url(${newImage})`;
             beadImage = newImage;
-
-            try{
-              const docRef = await addDoc(collection(db,"bracelets"), {
+            try {
+              await addDoc(collection(db, "bracelets"), {
                 beadIndex: i,
                 imageUrl: beadImage,
                 updatedAt: serverTimestamp()
               });
-              console.log("Bead saved with ID:", docRef.id);
-            }catch(error){
-              console.error("Error saving bead:", error);
+              showNotification("Bead updated!");
+            } catch (e) {
+              console.error(e);
+              showNotification("Failed to update bead", false);
             }
           }
         });
@@ -133,107 +692,117 @@
       }
     }
 
-    window.addEventListener("DOMContentLoaded", setupBracelet);
+    // Create floating particles
+    function createParticles() {
+      const container = document.querySelector('.particles');
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 15 + 's';
+        particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+        container.appendChild(particle);
+      }
+    }
 
+    document.addEventListener("DOMContentLoaded", () => {
+      createParticles();
+      setupBracelet();
+      
+      // Enter key support
+      document.getElementById("message").addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          generateQR();
+        }
+      });
+    });
   </script>
-
-  <style>
-    body{
-      margin:0;
-      font-family:Arial;
-      display:flex;
-      height:100vh;
-    }
-
-    /* SIDEBAR */
-    .sidebar{
-      width:220px;
-      background:#222;
-      color:white;
-      padding:20px;
-    }
-
-    .sidebar h2{
-      text-align:center;
-    }
-
-    .sidebar button{
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border:none;
-      background:#444;
-      color:white;
-      cursor:pointer;
-    }
-
-    .sidebar button:hover{
-      background:#666;
-    }
-
-    /* MAIN CONTENT */
-    .main{
-      flex:1;
-      padding:40px;
-    }
-
-    /* PAGES */
-    .page{
-      display:none;
-    }
-
-    .active{
-      display:block;
-    }
-
-    /* BRACELET */
-    .bracelet{
-      position:relative;
-      width:320px;
-      height:320px;
-      margin-top:40px;
-    }
-
-    .bead{
-      position:absolute;
-      width:40px;
-      height:40px;
-      border-radius:50%;
-      border:2px solid #999;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      font-weight:bold;
-      background-size: cover;
-      background-position: center;
-    }
-  </style>
 </head>
 <body>
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h2>CharmSync</h2>
-    <button onclick="showPage('qrPage')">Generate QR</button>
-    <button onclick="showPage('braceletPage')">Bracelet Preview</button>
-  </div>
-
-  <!-- MAIN CONTENT -->
-  <div class="main">
-    <!-- QR GENERATOR PAGE -->
-    <div id="qrPage" class="page active">
-      <h2>Generate Message QR</h2>
-      <input type="text" id="message" placeholder="Enter message" style="padding:10px;width:300px">
-      <br><br>
-      <button onclick="generateQR()">Generate & Save QR</button>
-      <div id="qrcode" style="margin-top:20px"></div>
+  <div class="particles"></div>
+  
+  <div class="container">
+    <div class="sidebar">
+      <div class="logo">
+        <h1>CharmSync</h1>
+        <p>Memory Charms</p>
+      </div>
+      
+      <button class="nav-btn active" onclick="showPage('qrPage')">
+        ✨ Create Message
+      </button>
+      <button class="nav-btn" onclick="showPage('braceletPage')">
+        💎 Bracelet Preview
+      </button>
     </div>
 
-    <!-- BRACELET PAGE -->
-    <div id="braceletPage" class="page">
-      <h2>Bracelet Visualization</h2>
-      <p>Click beads to customize design</p>
-      <div class="bracelet" id="bracelet"></div>
+    <div class="main">
+      <!-- QR Generator Page -->
+      <div id="qrPage" class="page active">
+        <h2>Create a Memory</h2>
+        <p class="subtitle">Send a heartfelt message through your charm bracelet</p>
+
+        <div class="form-group">
+          <label>Message Type</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setMessageType('instant')">
+              ⚡ Instant Message
+            </button>
+            <button class="toggle-btn" onclick="setMessageType('locked')">
+              🔒 Time-Locked Message
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Your Message</label>
+          <textarea 
+            id="message" 
+            placeholder="Write your heartfelt message here...&#10;&#10;This message will be embedded in the QR code charm."
+          ></textarea>
+        </div>
+
+        <div class="date-input-wrapper">
+          <div class="form-group">
+            <label>Unlock Date & Time</label>
+            <input type="datetime-local" id="unlockDate">
+          </div>
+        </div>
+
+        <button class="primary-btn" onclick="generateQR()">
+          Generate QR Charm
+        </button>
+
+        <div class="qr-container">
+          <h3 style="font-family: 'Playfair Display', serif; margin-bottom: 20px; color: var(--charcoal);">
+            Your QR Charm is Ready! 💫
+          </h3>
+          <div id="qrcode"></div>
+          <p style="color: var(--deep-rose); margin-bottom: 20px;">
+            Print or save this QR code to attach to your charm bracelet
+          </p>
+          <div class="qr-actions">
+            <button class="secondary-btn" onclick="downloadQR()">
+              📥 Download QR
+            </button>
+            <button class="secondary-btn" onclick="generateQR()">
+              🔄 Create Another
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bracelet Preview Page -->
+      <div id="braceletPage" class="page">
+        <h2>Bracelet Preview</h2>
+        <p class="subtitle">Visualize your charm bracelet design. Click beads to customize.</p>
+        
+        <div class="bracelet-container">
+          <div class="bracelet" id="bracelet"></div>
+        </div>
+      </div>
     </div>
   </div>
 </body>
