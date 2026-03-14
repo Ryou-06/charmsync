@@ -4,1461 +4,552 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CharmSync - Realistic Bracelet Designer</title>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
-  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
   <style>
     :root {
-      --rose-gold: #E8B4A8;
-      --deep-rose: #C89FA5;
-      --lavender: #B4A8E8;
-      --cream: #FAF8F3;
-      --charcoal: #2A2A2A;
-      --soft-shadow: 0 8px 30px rgba(200, 159, 165, 0.15);
-      --glow: 0 0 40px rgba(232, 180, 168, 0.3);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Manrope', sans-serif;
-      background: linear-gradient(135deg, var(--cream) 0%, #FFF5F0 100%);
-      min-height: 100vh;
-      color: var(--charcoal);
-      overflow-x: hidden;
-    }
-
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: radial-gradient(circle, var(--rose-gold), transparent);
-      border-radius: 50%;
-      animation: float 15s infinite ease-in-out;
-      opacity: 0.3;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
-      50% { transform: translate(30px, -50px) scale(1.5); opacity: 0.5; }
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      width: 280px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      border-right: 1px solid rgba(232, 180, 168, 0.2);
-      padding: 40px 30px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-    }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 60px;
-    }
-
-    .logo h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 32px;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--rose-gold), var(--lavender));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-    }
-
-    .logo p {
-      font-size: 13px;
-      color: var(--deep-rose);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-
-    .nav-btn {
-      width: 100%;
-      padding: 18px 24px;
-      margin-bottom: 12px;
-      border: none;
-      background: transparent;
-      color: var(--charcoal);
-      font-family: 'Manrope', sans-serif;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      border-radius: 16px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      text-align: left;
-    }
-
-    .nav-btn:hover {
-      background: rgba(232, 180, 168, 0.15);
-      transform: translateX(4px);
-    }
-
-    .nav-btn.active {
-      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
-      color: white;
-      box-shadow: var(--soft-shadow);
-    }
-
-    .main {
-      flex: 1;
-      padding: 60px 80px;
-      max-width: 1400px;
-    }
-
-    .page {
-      display: none;
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 42px;
-      font-weight: 600;
-      color: var(--charcoal);
-      margin-bottom: 12px;
-    }
-
-    .subtitle {
-      font-size: 16px;
-      color: var(--deep-rose);
-      margin-bottom: 40px;
-      line-height: 1.6;
-    }
-
-    /* Form styling */
-    .form-group {
-      margin-bottom: 30px;
-    }
-
-    label {
-      display: block;
-      font-weight: 600;
-      font-size: 14px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--charcoal);
-      margin-bottom: 12px;
-    }
-
-    .toggle-group {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-
-    .toggle-btn {
-      flex: 1;
-      padding: 16px 24px;
-      border: 2px solid var(--rose-gold);
-      background: white;
-      border-radius: 12px;
-      cursor: pointer;
-      font-family: 'Manrope', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      color: var(--charcoal);
-    }
-
-    .toggle-btn:hover {
-      background: rgba(232, 180, 168, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .toggle-btn.active {
-      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
-      color: white;
-      border-color: var(--rose-gold);
-      box-shadow: var(--soft-shadow);
-    }
-
-    input[type="text"],
-    input[type="datetime-local"],
-    textarea {
-      width: 100%;
-      padding: 18px 20px;
-      border: 2px solid rgba(232, 180, 168, 0.3);
-      border-radius: 12px;
-      font-family: 'Manrope', sans-serif;
-      font-size: 15px;
-      background: white;
-      transition: all 0.3s ease;
-      color: var(--charcoal);
-    }
-
-    input[type="text"]:focus,
-    input[type="datetime-local"]:focus,
-    textarea:focus {
-      outline: none;
-      border-color: var(--rose-gold);
-      box-shadow: 0 0 0 4px rgba(232, 180, 168, 0.1);
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-
-    .date-input-wrapper {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
-      opacity: 0;
-    }
-
-    .date-input-wrapper.show {
-      max-height: 120px;
-      opacity: 1;
-    }
-
-    /* QR Code display */
-    .qr-container {
-      margin-top: 40px;
-      padding: 40px;
-      background: white;
-      border-radius: 20px;
-      box-shadow: var(--soft-shadow);
-      text-align: center;
-      display: none;
-      animation: slideUp 0.5s ease-out;
-    }
-
-    .qr-container.show {
-      display: block;
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    #qrcode {
-      display: inline-block;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-
-    #qrcode img {
-      border-radius: 8px;
-    }
-
-    .qr-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-
-    .secondary-btn {
-      padding: 12px 28px;
-      border: 2px solid var(--rose-gold);
-      background: white;
-      color: var(--charcoal);
-      border-radius: 10px;
-      font-family: 'Manrope', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .secondary-btn:hover {
-      background: var(--rose-gold);
-      color: white;
-    }
-
-    /* Designer Layout */
-    .designer-layout {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 30px;
-      align-items: start;
-    }
-
-    /* View Toggle */
-    .view-toggle {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 30px;
-      background: white;
-      padding: 8px;
-      border-radius: 16px;
-      box-shadow: var(--soft-shadow);
-      width: fit-content;
-    }
-
-    .view-btn {
-      padding: 12px 24px;
-      border: none;
-      background: transparent;
-      border-radius: 12px;
-      cursor: pointer;
-      font-family: 'Manrope', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--charcoal);
-      transition: all 0.3s ease;
-    }
-
-    .view-btn.active {
-      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
-      color: white;
-    }
-
-    /* Bracelet Container */
-    .bracelet-view {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: var(--soft-shadow);
-      min-height: 600px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    /* Circle View */
-    .circle-view {
-      display: none;
-      width: 100%;
-      max-width: 500px;
-    }
-
-    .circle-view.active {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .bracelet-circle {
-      position: relative;
-      width: 400px;
-      height: 400px;
-    }
-
-    /* Wrist placeholder in center */
-    .bracelet-circle::before {
-      content: 'WRIST';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 160px;
-      height: 160px;
-      background: radial-gradient(circle, rgba(243, 235, 225, 0.6) 0%, rgba(243, 235, 225, 0.3) 60%, transparent 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Playfair Display', serif;
-      font-size: 18px;
-      font-weight: 300;
-      color: rgba(42, 42, 42, 0.15);
-      letter-spacing: 3px;
-      border: 2px dashed rgba(200, 159, 165, 0.15);
-    }
-
-    /* Bracelet chain/string */
-    .bracelet-circle::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 310px;
-      height: 310px;
-      border: 4px solid transparent;
-      border-radius: 50%;
-      background: 
-        linear-gradient(white, white) padding-box,
-        repeating-linear-gradient(
-          90deg,
-          #D4AF37 0px,
-          #F4E5C2 2px,
-          #D4AF37 4px,
-          #C19A6B 6px,
-          #D4AF37 8px
-        ) border-box;
-      box-shadow: 
-        0 0 0 1px rgba(212, 175, 55, 0.3),
-        inset 0 2px 4px rgba(0, 0, 0, 0.1),
-        0 3px 8px rgba(212, 175, 55, 0.3);
-      z-index: 0;
-    }
-
-    .circle-bead {
-      position: absolute;
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: 3px solid var(--rose-gold);
-      background: white;
-      background-size: cover;
-      background-position: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 
-        0 4px 12px rgba(200, 159, 165, 0.4),
-        0 2px 4px rgba(0, 0, 0, 0.2),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--deep-rose);
-      z-index: 1;
-    }
-
-    .circle-bead.empty {
-      background: linear-gradient(135deg, #f8f8f8, #ffffff);
-      border-style: dashed;
-      border-color: var(--deep-rose);
-      box-shadow: 
-        0 2px 8px rgba(200, 159, 165, 0.2),
-        inset 0 1px 2px rgba(255, 255, 255, 0.8);
-    }
-
-    .circle-bead:hover {
-      transform: scale(1.15);
-      box-shadow: 
-        0 8px 20px rgba(200, 159, 165, 0.5), 
-        0 4px 8px rgba(0, 0, 0, 0.3),
-        var(--glow);
-      z-index: 10;
-    }
-
-    .circle-bead.selected {
-      border-color: var(--lavender);
-      border-width: 4px;
-      box-shadow: 
-        0 0 20px rgba(180, 168, 232, 0.8),
-        0 6px 16px rgba(180, 168, 232, 0.4);
-      animation: selectedPulse 1.5s infinite;
-    }
-
-    @keyframes selectedPulse {
-      0%, 100% { transform: scale(1.1); }
-      50% { transform: scale(1.2); box-shadow: 0 0 30px rgba(180, 168, 232, 1); }
-    }
-
-    .circle-bead.has-image {
-      border-color: var(--rose-gold);
-      border-style: solid;
-      box-shadow: 
-        0 6px 16px rgba(200, 159, 165, 0.5),
-        0 3px 6px rgba(0, 0, 0, 0.3),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Clasp decoration */
-    .bracelet-clasp {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 20px;
-      height: 12px;
-      background: linear-gradient(135deg, #D4AF37, #F4E5C2, #D4AF37);
-      border-radius: 6px;
-      box-shadow: 
-        0 2px 6px rgba(0, 0, 0, 0.3),
-        inset 0 1px 2px rgba(255, 255, 255, 0.5);
-      z-index: 2;
-    }
-
-    .bracelet-clasp::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 4px;
-      height: 4px;
-      background: #C19A6B;
-      border-radius: 50%;
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Flat Product View */
-    .flat-product {
-      display: none;
-      width: 100%;
-      max-width: 700px;
-    }
-
-    .flat-product.active {
-      display: block;
-    }
-
-    .product-stage {
-      background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
-      border-radius: 20px;
-      padding: 60px;
-      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
-      position: relative;
-    }
-
-    .product-bracelet {
-      position: relative;
-      width: 100%;
-      max-width: 500px;
-      margin: 0 auto;
-      padding-bottom: 50%;
-    }
-
-    .product-chain {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 8px;
-      background: linear-gradient(90deg, 
-        #D4AF37 0%, #F4E5C2 25%, #D4AF37 50%, #F4E5C2 75%, #D4AF37 100%);
-      transform: translateY(-50%);
-      border-radius: 4px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .product-bead {
-      position: absolute;
-      width: 55px;
-      height: 55px;
-      border-radius: 50%;
-      border: 3px solid #D4AF37;
-      background-size: cover;
-      background-position: center;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    /* Bead Palette */
-    .bead-palette {
-      background: white;
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: var(--soft-shadow);
-      position: sticky;
-      top: 20px;
-    }
-
-    .palette-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--charcoal);
-      margin-bottom: 8px;
-    }
-
-    .palette-subtitle {
-      font-size: 13px;
-      color: var(--deep-rose);
-      margin-bottom: 25px;
-    }
-
-    .palette-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 25px;
-    }
-
-    .palette-bead {
-      width: 100%;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      border: 3px solid var(--rose-gold);
-      background-size: cover;
-      background-position: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(200, 159, 165, 0.2);
-      position: relative;
-    }
-
-    .palette-bead::after {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      border: 3px solid var(--lavender);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .palette-bead:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 15px rgba(200, 159, 165, 0.4);
-    }
-
-    .palette-bead.active::after {
-      opacity: 1;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-
-    .bead-number {
-      position: absolute;
-      bottom: -8px;
-      right: -8px;
-      width: 24px;
-      height: 24px;
-      background: var(--lavender);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .position-selector {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 2px solid rgba(232, 180, 168, 0.2);
-    }
-
-    .position-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-      margin-top: 15px;
-    }
-
-    .position-slot {
-      aspect-ratio: 1;
-      border: 2px dashed var(--deep-rose);
-      border-radius: 50%;
-      background: rgba(232, 180, 168, 0.05);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--deep-rose);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .position-slot:hover {
-      background: rgba(232, 180, 168, 0.15);
-      border-color: var(--rose-gold);
-      transform: scale(1.1);
-    }
-
-    .position-slot.filled {
-      border-style: solid;
-      border-color: var(--rose-gold);
-      border-width: 3px;
-    }
-
-    .position-slot.selected {
-      border-color: var(--lavender);
-      border-width: 3px;
-      box-shadow: 0 0 15px rgba(180, 168, 232, 0.5);
-      animation: selectedPulse 1.5s infinite;
-    }
-
-    @keyframes selectedPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.15); }
-    }
-
-    .slot-preview {
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      border-radius: 50%;
-    }
-
-    .upload-section {
-      margin-top: 25px;
-      padding-top: 25px;
-      border-top: 2px solid rgba(232, 180, 168, 0.2);
-    }
-
-    .upload-btn {
-      width: 100%;
-      padding: 14px;
-      border: 2px dashed var(--rose-gold);
-      background: rgba(232, 180, 168, 0.05);
-      border-radius: 12px;
-      cursor: pointer;
-      font-family: 'Manrope', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--charcoal);
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .upload-btn:hover {
-      background: rgba(232, 180, 168, 0.15);
-      border-style: solid;
-    }
-
-    .action-buttons {
-      margin-top: 25px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .primary-btn {
-      width: 100%;
-      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
-      color: white;
-      border: none;
-      padding: 16px;
-      border-radius: 12px;
-      font-family: 'Manrope', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: var(--soft-shadow);
-    }
-
-    .primary-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(200, 159, 165, 0.3);
-    }
-
-    .clear-btn {
-      width: 100%;
-      padding: 14px;
-      border: 2px solid #e0e0e0;
-      background: white;
-      border-radius: 10px;
-      cursor: pointer;
-      font-family: 'Manrope', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: #666;
-      transition: all 0.3s ease;
-    }
-
-    .clear-btn:hover {
-      background: #f5f5f5;
-      border-color: #ccc;
-    }
-
-    .view-controls {
-      margin-top: 20px;
-      text-align: center;
-      color: var(--deep-rose);
-      font-size: 13px;
-    }
-
-    .success-msg {
-      position: fixed;
-      top: 30px;
-      right: 30px;
-      background: linear-gradient(135deg, var(--rose-gold), var(--lavender));
-      color: white;
-      padding: 20px 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(200, 159, 165, 0.4);
-      font-weight: 600;
-      opacity: 0;
-      transform: translateY(-20px);
-      transition: all 0.3s ease;
-      z-index: 1000;
-    }
-
-    .success-msg.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    @media (max-width: 1024px) {
-      .designer-layout {
-        grid-template-columns: 1fr;
-      }
-      .bead-palette {
-        position: static;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      .sidebar {
-        width: 100%;
-        padding: 20px;
-      }
-      .main {
-        padding: 30px 20px;
-      }
-      h2 {
-        font-size: 32px;
-      }
-    }
+      --rose-gold:#E8B4A8; --deep-rose:#C89FA5; --lavender:#B4A8E8;
+      --cream:#FAF8F3; --charcoal:#2A2A2A;
+      --soft-shadow:0 8px 30px rgba(200,159,165,0.15);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Manrope',sans-serif;background:linear-gradient(135deg,var(--cream) 0%,#FFF5F0 100%);min-height:100vh;color:var(--charcoal);overflow-x:hidden;}
+    .particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+    .particle{position:absolute;width:4px;height:4px;background:radial-gradient(circle,var(--rose-gold),transparent);border-radius:50%;animation:float 15s infinite ease-in-out;opacity:0.3;}
+    @keyframes float{0%,100%{transform:translate(0,0) scale(1);opacity:0.2;}50%{transform:translate(30px,-50px) scale(1.5);opacity:0.5;}}
+    .container{position:relative;z-index:1;display:flex;min-height:100vh;}
+    .sidebar{width:280px;background:rgba(255,255,255,0.7);backdrop-filter:blur(20px);border-right:1px solid rgba(232,180,168,0.2);padding:40px 30px;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,0.05);}
+    .logo{text-align:center;margin-bottom:60px;}
+    .logo h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--rose-gold),var(--lavender));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+    .logo p{font-size:13px;color:var(--deep-rose);letter-spacing:2px;text-transform:uppercase;font-weight:500;}
+    .nav-btn{width:100%;padding:18px 24px;margin-bottom:12px;border:none;background:transparent;color:var(--charcoal);font-family:'Manrope',sans-serif;font-size:15px;font-weight:500;cursor:pointer;border-radius:16px;transition:all 0.3s ease;text-align:left;}
+    .nav-btn:hover{background:rgba(232,180,168,0.15);transform:translateX(4px);}
+    .nav-btn.active{background:linear-gradient(135deg,var(--rose-gold),var(--deep-rose));color:white;box-shadow:var(--soft-shadow);}
+    .main{flex:1;padding:60px 80px;}
+    .page{display:none;animation:fadeIn 0.5s ease-out;}
+    .page.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    h2{font-family:'Playfair Display',serif;font-size:42px;font-weight:600;margin-bottom:12px;}
+    .subtitle{font-size:16px;color:var(--deep-rose);margin-bottom:40px;line-height:1.6;}
+    .form-group{margin-bottom:30px;}
+    label{display:block;font-weight:600;font-size:14px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:12px;}
+    .toggle-group{display:flex;gap:12px;margin-bottom:30px;}
+    .toggle-btn{flex:1;padding:16px 24px;border:2px solid var(--rose-gold);background:white;border-radius:12px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:15px;font-weight:600;transition:all 0.3s ease;color:var(--charcoal);}
+    .toggle-btn.active{background:linear-gradient(135deg,var(--rose-gold),var(--deep-rose));color:white;border-color:var(--rose-gold);}
+    input[type="datetime-local"],textarea{width:100%;padding:18px 20px;border:2px solid rgba(232,180,168,0.3);border-radius:12px;font-family:'Manrope',sans-serif;font-size:15px;background:white;transition:all 0.3s ease;color:var(--charcoal);}
+    input[type="datetime-local"]:focus,textarea:focus{outline:none;border-color:var(--rose-gold);}
+    textarea{min-height:120px;resize:vertical;line-height:1.6;}
+    .date-input-wrapper{max-height:0;overflow:hidden;transition:max-height 0.4s ease,opacity 0.4s ease;opacity:0;}
+    .date-input-wrapper.show{max-height:120px;opacity:1;}
+    .qr-container{margin-top:40px;padding:40px;background:white;border-radius:20px;box-shadow:var(--soft-shadow);text-align:center;display:none;}
+    .qr-container.show{display:block;}
+    #qrcode{display:inline-block;padding:20px;background:white;border-radius:12px;margin-bottom:20px;}
+    .qr-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+    .secondary-btn{padding:12px 28px;border:2px solid var(--rose-gold);background:white;color:var(--charcoal);border-radius:10px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s ease;}
+    .secondary-btn:hover{background:var(--rose-gold);color:white;}
+    .designer-layout{display:grid;grid-template-columns:1fr 320px;gap:30px;align-items:start;}
+    .view-toggle{display:flex;gap:12px;margin-bottom:30px;background:white;padding:8px;border-radius:16px;box-shadow:var(--soft-shadow);width:fit-content;}
+    .view-btn{padding:12px 24px;border:none;background:transparent;border-radius:12px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;color:var(--charcoal);transition:all 0.3s ease;}
+    .view-btn.active{background:linear-gradient(135deg,var(--rose-gold),var(--deep-rose));color:white;}
+    .bracelet-view{background:white;border-radius:20px;padding:40px;box-shadow:var(--soft-shadow);min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .circle-view{display:none;width:100%;max-width:500px;}
+    .circle-view.active{display:flex;justify-content:center;align-items:center;}
+    .bracelet-circle{position:relative;width:400px;height:400px;}
+    .bracelet-circle::before{content:'WRIST';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:160px;height:160px;background:radial-gradient(circle,rgba(243,235,225,0.6) 0%,transparent 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;color:rgba(42,42,42,0.15);letter-spacing:3px;border:2px dashed rgba(200,159,165,0.15);}
+    .bracelet-circle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:310px;height:310px;border:4px solid transparent;border-radius:50%;background:linear-gradient(white,white) padding-box,repeating-linear-gradient(90deg,#D4AF37 0px,#F4E5C2 2px,#D4AF37 4px,#C19A6B 6px,#D4AF37 8px) border-box;box-shadow:0 0 0 1px rgba(212,175,55,0.3),0 3px 8px rgba(212,175,55,0.3);z-index:0;}
+    .circle-bead{position:absolute;width:52px;height:52px;border-radius:50%;border:3px solid var(--rose-gold);background:white;background-size:cover;background-position:center;cursor:pointer;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(200,159,165,0.4),0 2px 4px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--deep-rose);z-index:1;}
+    .circle-bead.empty{background:linear-gradient(135deg,#f8f8f8,#fff);border-style:dashed;border-color:var(--deep-rose);}
+    .circle-bead:hover{transform:scale(1.15);z-index:10;}
+    .circle-bead.selected{border-color:var(--lavender);border-width:4px;box-shadow:0 0 20px rgba(180,168,232,0.8);}
+    .circle-bead.has-image{border-color:var(--rose-gold);border-style:solid;}
+    .bracelet-clasp{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);width:20px;height:12px;background:linear-gradient(135deg,#D4AF37,#F4E5C2,#D4AF37);border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.3);z-index:2;}
+    .flat-product{display:none;width:100%;max-width:700px;}
+    .flat-product.active{display:block;}
+    .product-stage{background:linear-gradient(to bottom,#fff,#f8f8f8);border-radius:20px;padding:60px;}
+    .product-bracelet{position:relative;width:100%;max-width:500px;margin:0 auto;padding-bottom:50%;}
+    .product-chain{position:absolute;top:50%;left:0;right:0;height:8px;background:linear-gradient(90deg,#D4AF37 0%,#F4E5C2 25%,#D4AF37 50%,#F4E5C2 75%,#D4AF37 100%);transform:translateY(-50%);border-radius:4px;box-shadow:0 3px 8px rgba(0,0,0,0.2);}
+    .product-bead{position:absolute;width:55px;height:55px;border-radius:50%;border:3px solid #D4AF37;background-size:cover;background-position:center;box-shadow:0 6px 20px rgba(0,0,0,0.25);top:50%;transform:translateY(-50%);}
+    .bead-palette{background:white;border-radius:20px;padding:30px;box-shadow:var(--soft-shadow);position:sticky;top:20px;}
+    .palette-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin-bottom:8px;}
+    .palette-subtitle{font-size:13px;color:var(--deep-rose);margin-bottom:25px;}
+    .palette-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:25px;min-height:80px;}
+    .palette-bead{width:100%;aspect-ratio:1;border-radius:50%;border:3px solid var(--rose-gold);background-size:cover;background-position:center;cursor:pointer;transition:all 0.3s ease;position:relative;}
+    .palette-bead:hover{transform:scale(1.1);}
+    .palette-bead.active{outline:3px solid var(--lavender);outline-offset:3px;}
+    /* Loading spinner for palette */
+    .palette-loading{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;color:var(--deep-rose);font-size:14px;gap:12px;}
+    .spinner{width:32px;height:32px;border:3px solid rgba(232,180,168,0.3);border-top-color:var(--rose-gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .position-selector{margin-top:20px;padding-top:20px;border-top:2px solid rgba(232,180,168,0.2);}
+    .position-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:15px;}
+    .position-slot{aspect-ratio:1;border:2px dashed var(--deep-rose);border-radius:50%;background:rgba(232,180,168,0.05);cursor:pointer;transition:all 0.3s ease;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--deep-rose);position:relative;overflow:hidden;}
+    .position-slot:hover{background:rgba(232,180,168,0.15);transform:scale(1.1);}
+    .position-slot.filled{border-style:solid;border-color:var(--rose-gold);border-width:3px;}
+    .position-slot.selected{border-color:var(--lavender);border-width:3px;box-shadow:0 0 12px rgba(180,168,232,0.5);}
+    .slot-preview{width:100%;height:100%;background-size:cover;background-position:center;border-radius:50%;}
+    .upload-section{margin-top:25px;padding-top:25px;border-top:2px solid rgba(232,180,168,0.2);}
+    .upload-btn{width:100%;padding:14px;border:2px dashed var(--rose-gold);background:rgba(232,180,168,0.05);border-radius:12px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;color:var(--charcoal);transition:all 0.3s ease;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .upload-btn:hover{background:rgba(232,180,168,0.15);border-style:solid;}
+    .action-buttons{margin-top:25px;display:flex;flex-direction:column;gap:10px;}
+    .primary-btn{width:100%;background:linear-gradient(135deg,var(--rose-gold),var(--deep-rose));color:white;border:none;padding:16px;border-radius:12px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s ease;box-shadow:var(--soft-shadow);}
+    .primary-btn:hover{transform:translateY(-2px);}
+    .primary-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+    .clear-btn{width:100%;padding:14px;border:2px solid #e0e0e0;background:white;border-radius:10px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;color:#666;transition:all 0.3s ease;}
+    .clear-btn:hover{background:#f5f5f5;}
+    .view-controls{margin-top:20px;text-align:center;color:var(--deep-rose);font-size:13px;}
+    .bead-count-badge{display:inline-block;background:linear-gradient(135deg,var(--rose-gold),var(--lavender));color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle;}
+    .toast{position:fixed;top:30px;right:30px;padding:16px 24px;border-radius:12px;font-family:'Manrope',sans-serif;font-weight:600;font-size:14px;color:white;opacity:0;transform:translateY(-20px);transition:all 0.3s ease;z-index:9999;background:linear-gradient(135deg,var(--rose-gold),var(--lavender));box-shadow:0 8px 30px rgba(200,159,165,0.4);max-width:340px;}
+    .toast.err{background:linear-gradient(135deg,#e88,#c77);}
+    .toast.show{opacity:1;transform:translateY(0);}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;}
+    .modal-box{background:white;border-radius:20px;padding:36px;max-width:500px;width:90%;}
+    .modal-box h3{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:16px;}
+    .modal-canvas-wrap{position:relative;width:340px;height:340px;margin:0 auto 20px;background:#f0f0f0;border-radius:12px;overflow:hidden;}
+    .modal-canvas-wrap canvas{cursor:move;display:block;}
+    .modal-circle-mask{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:170px;height:170px;border:3px solid var(--rose-gold);border-radius:50%;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);}
+    .modal-label{font-size:13px;font-weight:600;display:block;margin-bottom:6px;}
+    .modal-slider{width:100%;margin-bottom:16px;}
+    .modal-actions{display:flex;gap:12px;justify-content:center;}
+    .btn-cancel{padding:12px 28px;border:2px solid #ccc;background:white;border-radius:10px;font-family:'Manrope',sans-serif;font-weight:600;cursor:pointer;font-size:14px;}
+    .btn-add{padding:12px 28px;border:none;background:linear-gradient(135deg,var(--rose-gold),var(--deep-rose));color:white;border-radius:10px;font-family:'Manrope',sans-serif;font-weight:600;cursor:pointer;font-size:14px;}
+    .btn-add:disabled{opacity:0.6;cursor:not-allowed;}
+    .saving-indicator{text-align:center;margin-top:12px;font-size:13px;color:var(--deep-rose);min-height:20px;}
+    @media(max-width:1024px){.designer-layout{grid-template-columns:1fr;}.bead-palette{position:static;}}
+    @media(max-width:768px){.container{flex-direction:column;}.sidebar{width:100%;padding:20px;}.main{padding:30px 20px;}h2{font-size:32px;}}
   </style>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBgO6Tig6uWBdrEGFuCRcS45SC5rQ5nEyI",
-      authDomain: "charmsync.firebaseapp.com",
-      projectId: "charmsync",
-      storageBucket: "charmsync.firebasestorage.app",
-      messagingSenderId: "109688788362",
-      appId: "1:109688788362:web:21f4e2e5b379613fbca473",
-      measurementId: "G-NCMVBS4Q08"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // Sample bead images (replace with your actual bead images)
-    const beadImages = [
-      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1583937443569-f14a36c02707?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=100&h=100&fit=crop",
-      "https://images.unsplash.com/photo-1617646773925-da6c4c935e27?w=100&h=100&fit=crop",
-    ];
-
-    const totalBeads = 14;
-    let braceletBeads = Array(totalBeads).fill(null);
-    let selectedBeadImage = null;
-    let selectedPosition = null;
-    let currentView = 'circle';
-    let messageType = 'instant';
-
-    // Save message with optional unlock date
-    async function saveMessage(message, unlockDateStr = null) {
-      try {
-        const messageData = {
-          text: message,
-          createdAt: serverTimestamp()
-        };
-
-        if (unlockDateStr) {
-          messageData.unlockAt = new Date(unlockDateStr);
-        }
-
-        const docRef = await addDoc(collection(db, "qrMessages"), messageData);
-        console.log("Message saved with ID:", docRef.id);
-        return docRef.id;
-      } catch (error) {
-        console.error("Error saving message:", error);
-        showNotification("Failed to save message. Please try again.", false);
-        return null;
-      }
-    }
-
-    // Generate QR code
-    async function generateQR() {
-      const message = document.getElementById("message").value.trim();
-      const unlockDate = document.getElementById("unlockDate").value;
-
-      if (!message) {
-        showNotification("Please enter a message!", false);
-        return;
-      }
-
-      if (messageType === 'locked' && !unlockDate) {
-        showNotification("Please select an unlock date!", false);
-        return;
-      }
-
-      const docId = await saveMessage(
-        message, 
-        messageType === 'locked' ? unlockDate : null
-      );
-
-      if (!docId) return;
-
-      const qrUrl = `https://charmsync.web.app/view.html?id=${docId}`;
-
-      document.getElementById("qrcode").innerHTML = "";
-      new QRCode(document.getElementById("qrcode"), {
-        text: qrUrl,
-        width: 220,
-        height: 220,
-        colorDark: "#2A2A2A",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-
-      document.querySelector('.qr-container').classList.add('show');
-      
-      showNotification(
-        messageType === 'instant' 
-          ? "✨ QR Code created! Message will show instantly." 
-          : "🔒 QR Code created! Message locked until the set date."
-      );
-    }
-
-    // Download QR code
-    window.downloadQR = function() {
-      const canvas = document.querySelector('#qrcode canvas');
-      if (!canvas) return;
-      
-      const url = canvas.toDataURL("image/png");
-      const link = document.createElement('a');
-      link.download = 'charmsync-qr.png';
-      link.href = url;
-      link.click();
-      
-      showNotification("QR Code downloaded!");
-    };
-
-    // Toggle message type
-    window.setMessageType = function(type) {
-      messageType = type;
-      document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      event.target.classList.add('active');
-
-      const dateWrapper = document.querySelector('.date-input-wrapper');
-      if (type === 'locked') {
-        dateWrapper.classList.add('show');
-      } else {
-        dateWrapper.classList.remove('show');
-      }
-    };
-
-    window.generateQR = generateQR;
-
-    // Setup Circle Bracelet View
-    function setupCircleView() {
-      const bracelet = document.getElementById("braceletCircle");
-      if (!bracelet) return;
-      
-      bracelet.innerHTML = "";
-      
-      // Add clasp decoration
-      const clasp = document.createElement("div");
-      clasp.className = "bracelet-clasp";
-      bracelet.appendChild(clasp);
-      
-      const radius = 155;
-      const center = 200;
-
-      for (let i = 0; i < totalBeads; i++) {
-        let bead = document.createElement("div");
-        bead.className = "circle-bead";
-        bead.dataset.index = i;
-
-        if (braceletBeads[i]) {
-          bead.classList.add('has-image');
-          bead.style.backgroundImage = `url(${braceletBeads[i]})`;
-        } else {
-          bead.classList.add('empty');
-          bead.textContent = i + 1;
-        }
-
-        // Position beads around circle
-        let angle = (i / totalBeads) * 2 * Math.PI - Math.PI / 2;
-        let x = center + radius * Math.cos(angle) - 26;
-        let y = center + radius * Math.sin(angle) - 26;
-        bead.style.left = x + "px";
-        bead.style.top = y + "px";
-
-        // Rotate beads to follow the curve naturally
-        let rotationAngle = (angle * 180 / Math.PI) + 90;
-        bead.style.transform = `rotate(${rotationAngle}deg)`;
-        
-        // Keep the content (number/image) upright
-        if (!braceletBeads[i]) {
-          bead.style.display = 'flex';
-          bead.style.alignItems = 'center';
-          bead.style.justifyContent = 'center';
-          const span = document.createElement('span');
-          span.textContent = i + 1;
-          span.style.transform = `rotate(-${rotationAngle}deg)`;
-          span.style.display = 'inline-block';
-          bead.innerHTML = '';
-          bead.appendChild(span);
-        }
-
-        bead.addEventListener("click", () => selectCircleBead(i));
-        bracelet.appendChild(bead);
-      }
-    }
-
-    function selectCircleBead(index) {
-      // Deselect all beads
-      document.querySelectorAll('.circle-bead').forEach(b => b.classList.remove('selected'));
-      
-      // Select the clicked bead
-      const beadElement = document.querySelector(`.circle-bead[data-index="${index}"]`);
-      beadElement.classList.add('selected');
-      selectedPosition = index;
-
-      // If a palette image is selected, apply it immediately
-      if (selectedBeadImage) {
-        placeBead(index, selectedBeadImage);
-      } else {
-        showNotification("Now select a bead design from the palette →");
-      }
-    }
-
-    function setupFlatProduct() {
-      const container = document.querySelector('.product-bracelet');
-      if (!container) return;
-
-      // Clear existing beads
-      const existingBeads = container.querySelectorAll('.product-bead');
-      existingBeads.forEach(b => b.remove());
-
-      for (let i = 0; i < totalBeads; i++) {
-        if (!braceletBeads[i]) continue;
-
-        const bead = document.createElement('div');
-        bead.className = 'product-bead';
-        bead.style.backgroundImage = `url(${braceletBeads[i]})`;
-        
-        // Distribute beads evenly
-        const percent = (i / (totalBeads - 1)) * 100;
-        bead.style.left = `${percent}%`;
-        
-        container.appendChild(bead);
-      }
-    }
-
-    function updateAllViews() {
-      if (currentView === 'circle') {
-        setupCircleView();
-      } else if (currentView === 'flat') {
-        setupFlatProduct();
-      }
-      updatePositionSlots();
-    }
-
-    window.switchView = function(view) {
-      currentView = view;
-      
-      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      document.querySelector('.circle-view').classList.toggle('active', view === 'circle');
-      document.querySelector('.flat-product').classList.toggle('active', view === 'flat');
-
-      updateAllViews();
-    };
-
-    function setupPalette() {
-      const paletteGrid = document.querySelector('.palette-grid');
-      if (!paletteGrid) return;
-
-      paletteGrid.innerHTML = "";
-      beadImages.forEach((imgUrl, index) => {
-        const paletteBead = document.createElement("div");
-        paletteBead.className = "palette-bead";
-        paletteBead.style.backgroundImage = `url(${imgUrl})`;
-        
-        paletteBead.addEventListener("click", () => selectPaletteBead(imgUrl, paletteBead));
-        paletteGrid.appendChild(paletteBead);
-      });
-    }
-
-    function selectPaletteBead(imgUrl, element) {
-      document.querySelectorAll('.palette-bead').forEach(b => b.classList.remove('active'));
-      element.classList.add('active');
-      selectedBeadImage = imgUrl;
-
-      if (selectedPosition !== null) {
-        placeBead(selectedPosition, imgUrl);
-      } else {
-        showNotification("Now click a position number to place this bead");
-      }
-    }
-
-    function setupPositionSlots() {
-      const positionGrid = document.querySelector('.position-grid');
-      if (!positionGrid) return;
-
-      positionGrid.innerHTML = '';
-      for (let i = 0; i < totalBeads; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'position-slot';
-        slot.dataset.position = i;
-        
-        if (braceletBeads[i]) {
-          slot.classList.add('filled');
-          const preview = document.createElement('div');
-          preview.className = 'slot-preview';
-          preview.style.backgroundImage = `url(${braceletBeads[i]})`;
-          slot.appendChild(preview);
-        } else {
-          slot.textContent = i + 1;
-        }
-
-        slot.addEventListener('click', () => selectPosition(i));
-        positionGrid.appendChild(slot);
-      }
-    }
-
-    function updatePositionSlots() {
-      const slots = document.querySelectorAll('.position-slot');
-      slots.forEach((slot, i) => {
-        slot.innerHTML = '';
-        slot.classList.remove('filled', 'selected');
-        
-        if (i === selectedPosition) {
-          slot.classList.add('selected');
-        }
-
-        if (braceletBeads[i]) {
-          slot.classList.add('filled');
-          const preview = document.createElement('div');
-          preview.className = 'slot-preview';
-          preview.style.backgroundImage = `url(${braceletBeads[i]})`;
-          slot.appendChild(preview);
-        } else {
-          slot.textContent = i + 1;
-        }
-      });
-    }
-
-    function selectPosition(position) {
-      selectedPosition = position;
-      updatePositionSlots();
-
-      if (selectedBeadImage) {
-        placeBead(position, selectedBeadImage);
-      } else {
-        showNotification("Now select a bead design from above");
-      }
-    }
-
-    function placeBead(position, imgUrl) {
-      braceletBeads[position] = imgUrl;
-      updateAllViews();
-      
-      showNotification(`✨ Bead placed at position ${position + 1}!`);
-      
-      selectedPosition = null;
-      selectedBeadImage = null;
-      document.querySelectorAll('.palette-bead').forEach(b => b.classList.remove('active'));
-      updatePositionSlots();
-    }
-
-    window.clearBracelet = function() {
-      if (!confirm("Clear all beads from your bracelet?")) return;
-      
-      braceletBeads = Array(totalBeads).fill(null);
-      updateAllViews();
-      showNotification("Bracelet cleared!");
-    };
-
-    window.saveBracelet = async function() {
-      try {
-        const filledBeads = braceletBeads.filter(b => b !== null).length;
-        if (filledBeads === 0) {
-          showNotification("Add some beads first!", false);
-          return;
-        }
-
-        await addDoc(collection(db, "bracelets"), {
-          beads: braceletBeads,
-          createdAt: serverTimestamp()
-        });
-        
-        showNotification(`💎 Bracelet design saved! (${filledBeads} beads)`);
-      } catch (error) {
-        console.error("Error saving bracelet:", error);
-        showNotification("Failed to save bracelet", false);
-      }
-    };
-
-    window.handleImageUpload = function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        showNotification("Please upload an image file", false);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const imgUrl = e.target.result;
-        beadImages.push(imgUrl);
-        
-        const paletteGrid = document.querySelector('.palette-grid');
-        const paletteBead = document.createElement("div");
-        paletteBead.className = "palette-bead";
-        paletteBead.style.backgroundImage = `url(${imgUrl})`;
-        paletteBead.addEventListener("click", () => selectPaletteBead(imgUrl, paletteBead));
-        paletteGrid.appendChild(paletteBead);
-
-        showNotification("Custom bead added to palette!");
-      };
-      reader.readAsDataURL(file);
-    };
-
-    function showNotification(message, isSuccess = true) {
-      const notification = document.createElement('div');
-      notification.className = 'success-msg';
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => notification.classList.add('show'), 10);
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-      }, 3000);
-    }
-
-    window.showPage = function(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-      
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-    };
-
-    function createParticles() {
-      const container = document.querySelector('.particles');
-      for (let i = 0; i < 20; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.top = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 15 + 's';
-        particle.style.animationDuration = (10 + Math.random() * 10) + 's';
-        container.appendChild(particle);
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      createParticles();
-      setupCircleView();
-      setupPalette();
-      setupPositionSlots();
-      setupFlatProduct();
-
-      // Enter key support for message textarea
-      const messageInput = document.getElementById("message");
-      if (messageInput) {
-        messageInput.addEventListener("keydown", e => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            generateQR();
-          }
-        });
-      }
-    });
-  </script>
 </head>
 <body>
-  <div class="particles"></div>
-  
-  <div class="container">
-    <div class="sidebar">
-      <div class="logo">
-        <h1>CharmSync</h1>
-        <p>Memory Charms</p>
-      </div>
-      
-      <button class="nav-btn active" onclick="showPage('qrPage')">
-        ✨ Create Message
-      </button>
-      <button class="nav-btn" onclick="showPage('designPage')">
-        💎 Design Bracelet
-      </button>
-    </div>
-
-    <div class="main">
-      <!-- QR Generator Page -->
-      <div id="qrPage" class="page active">
-        <h2>Create a Memory</h2>
-        <p class="subtitle">Send a heartfelt message through your charm bracelet</p>
-
-        <div class="form-group">
-          <label>Message Type</label>
-          <div class="toggle-group">
-            <button class="toggle-btn active" onclick="setMessageType('instant')">
-              ⚡ Instant Message
-            </button>
-            <button class="toggle-btn" onclick="setMessageType('locked')">
-              🔒 Time-Locked Message
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Your Message</label>
-          <textarea 
-            id="message" 
-            placeholder="Write your heartfelt message here...&#10;&#10;This message will be embedded in the QR code charm."
-          ></textarea>
-        </div>
-
-        <div class="date-input-wrapper">
-          <div class="form-group">
-            <label>Unlock Date & Time</label>
-            <input type="datetime-local" id="unlockDate">
-          </div>
-        </div>
-
-        <button class="primary-btn" onclick="generateQR()">
-          Generate QR Charm
-        </button>
-
-        <div class="qr-container">
-          <h3 style="font-family: 'Playfair Display', serif; margin-bottom: 20px; color: var(--charcoal);">
-            Your QR Charm is Ready! 💫
-          </h3>
-          <div id="qrcode"></div>
-          <p style="color: var(--deep-rose); margin-bottom: 20px;">
-            Print or save this QR code to attach to your charm bracelet
-          </p>
-          <div class="qr-actions">
-            <button class="secondary-btn" onclick="downloadQR()">
-              📥 Download QR
-            </button>
-            <button class="secondary-btn" onclick="generateQR()">
-              🔄 Create Another
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bracelet Designer Page -->
-      <div id="designPage" class="page">
-        <h2>Design Your Bracelet</h2>
-        <p class="subtitle">Create a realistic preview of your personalized charm bracelet</p>
-
-        <div class="view-toggle">
-          <button class="view-btn active" onclick="switchView('circle')">
-            ⭕ Circle View
-          </button>
-          <button class="view-btn" onclick="switchView('flat')">
-            📸 Product View
-          </button>
-        </div>
-
-        <div class="designer-layout">
-          <div class="bracelet-view">
-            <!-- Circle View -->
-            <div class="circle-view active">
-              <div class="bracelet-circle" id="braceletCircle"></div>
-            </div>
-
-            <!-- Product View -->
-            <div class="flat-product">
-              <div class="product-stage">
-                <div class="product-bracelet">
-                  <div class="product-chain"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="view-controls">
-              <p>💡 <strong>Circle View:</strong> Click beads to customize • Real chain & clasp • <strong>Product View:</strong> Professional photo style</p>
-            </div>
-          </div>
-
-          <div class="bead-palette">
-            <div class="palette-title">Bead Collection</div>
-            <p class="palette-subtitle">Select a bead design</p>
-            
-            <div class="palette-grid"></div>
-
-            <div class="position-selector">
-              <div class="palette-title" style="font-size: 18px;">Position</div>
-              <p class="palette-subtitle">Click a number to place bead</p>
-              <div class="position-grid"></div>
-            </div>
-
-            <div class="upload-section">
-              <label for="customBeadUpload" class="upload-btn">
-                📤 Upload Custom Bead
-              </label>
-              <input 
-                type="file" 
-                id="customBeadUpload" 
-                accept="image/*" 
-                onchange="handleImageUpload(event)"
-                style="display: none;"
-              >
-            </div>
-
-            <div class="action-buttons">
-              <button class="primary-btn" onclick="saveBracelet()">
-                💾 Save Design
-              </button>
-              <button class="clear-btn" onclick="clearBracelet()">
-                🗑️ Clear All
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="particles"></div>
+<div class="container">
+  <div class="sidebar">
+    <div class="logo"><h1>CharmSync</h1><p>Memory Charms</p></div>
+    <button class="nav-btn active" onclick="showPage('qrPage',this)">✨ Create Message</button>
+    <button class="nav-btn" onclick="showPage('designPage',this)">💎 Design Bracelet</button>
   </div>
+  <div class="main">
+
+    <!-- QR Page -->
+    <div id="qrPage" class="page active">
+      <h2>Create a Memory</h2>
+      <p class="subtitle">Send a heartfelt message through your charm bracelet</p>
+      <div class="form-group">
+        <label>Message Type</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" onclick="setMessageType('instant',this)">⚡ Instant Message</button>
+          <button class="toggle-btn" onclick="setMessageType('locked',this)">🔒 Time-Locked Message</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Your Message</label>
+        <textarea id="message" placeholder="Write your heartfelt message here..."></textarea>
+      </div>
+      <div class="date-input-wrapper">
+        <div class="form-group">
+          <label>Unlock Date & Time</label>
+          <input type="datetime-local" id="unlockDate">
+        </div>
+      </div>
+      <button class="primary-btn" onclick="generateQR()">Generate QR Charm</button>
+      <div class="qr-container">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:20px;">Your QR Charm is Ready! 💫</h3>
+        <div id="qrcode"></div>
+        <p style="color:var(--deep-rose);margin-bottom:20px;">Print or save this QR code to attach to your charm bracelet</p>
+        <div class="qr-actions">
+          <button class="secondary-btn" onclick="downloadQR()">📥 Download QR</button>
+          <button class="secondary-btn" onclick="generateQR()">🔄 Create Another</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design Page -->
+    <div id="designPage" class="page">
+      <h2>Design Your Bracelet</h2>
+      <p class="subtitle">Your saved beads load automatically. Upload new ones anytime.</p>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="switchView('circle',this)">⭕ Circle View</button>
+        <button class="view-btn" onclick="switchView('flat',this)">📸 Product View</button>
+      </div>
+      <div class="designer-layout">
+        <div class="bracelet-view">
+          <div class="circle-view active"><div class="bracelet-circle" id="braceletCircle"></div></div>
+          <div class="flat-product">
+            <div class="product-stage"><div class="product-bracelet"><div class="product-chain"></div></div></div>
+          </div>
+          <div class="view-controls"><p>💡 Select a bead from the palette → click a position on the bracelet</p></div>
+        </div>
+        <div class="bead-palette">
+          <div class="palette-title">
+            Bead Collection
+            <span class="bead-count-badge" id="beadCount">0</span>
+          </div>
+          <p class="palette-subtitle">Tap a bead to select it</p>
+          <div class="palette-grid" id="paletteGrid">
+            <!-- Spinner shown while loading from Firestore -->
+            <div class="palette-loading">
+              <div class="spinner"></div>
+              <span>Loading beads…</span>
+            </div>
+          </div>
+          <div class="position-selector">
+            <div class="palette-title" style="font-size:18px;">Position</div>
+            <p class="palette-subtitle">Click a slot to place bead</p>
+            <div class="position-grid" id="positionGrid"></div>
+          </div>
+          <div class="upload-section">
+            <label for="fileInput" class="upload-btn">📤 Upload New Bead</label>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)" style="display:none;">
+          </div>
+          <div class="action-buttons">
+            <button class="primary-btn" id="saveBtn" onclick="saveBraceletLayout()">💾 Save Bracelet Layout</button>
+            <button class="clear-btn" onclick="clearBracelet()">🗑️ Clear All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── FIREBASE ──────────────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyBgO6Tig6uWBdrEGFuCRcS45SC5rQ5nEyI",
+  authDomain: "charmsync.firebaseapp.com",
+  projectId: "charmsync",
+  storageBucket: "charmsync.firebasestorage.app",
+  messagingSenderId: "109688788362",
+  appId: "1:109688788362:web:21f4e2e5b379613fbca473"
+});
+const db = firebase.firestore();
+console.log("🔥 Firebase ready");
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const TOTAL = 14;
+let beads   = Array(TOTAL).fill(null);
+let palette = []; // { id, base64 }
+let selImg  = null;
+let selPos  = null;
+let curView = 'circle';
+let msgType = 'instant';
+
+// ── FETCH BEADS FROM FIRESTORE ON LOAD ───────────────────────────────────────
+async function loadBeadsFromFirestore() {
+  console.log("📥 Fetching beads from Firestore...");
+  const grid = document.getElementById('paletteGrid');
+
+  try {
+    const snap = await db.collection("beads")
+      .orderBy("addedAt", "asc")
+      .get();
+
+    palette = []; // clear local palette
+    grid.innerHTML = ''; // clear spinner
+
+    if (snap.empty) {
+      console.log("ℹ️ No beads in database yet.");
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px 20px;color:var(--deep-rose);font-size:14px;">📦 No beads yet<br><small>Upload a bead image below!</small></div>`;
+      updateBeadCount(0);
+      return;
+    }
+
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data.base64) {
+        const item = { id: doc.id, base64: data.base64 };
+        palette.push(item);
+        addPaletteItem(item);
+      }
+    });
+
+    updateBeadCount(palette.length);
+    console.log(`✅ Loaded ${palette.length} bead(s) from Firestore`);
+    toast(`✨ ${palette.length} bead${palette.length > 1 ? 's' : ''} loaded from your collection!`);
+
+  } catch (e) {
+    console.error("❌ Failed to load beads:", e);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#e88;font-size:13px;">⚠️ Failed to load beads<br><small>${e.message}</small></div>`;
+  }
+}
+
+function updateBeadCount(n) {
+  const badge = document.getElementById('beadCount');
+  if (badge) badge.textContent = n;
+}
+
+// ── SAVE NEW BEAD TO FIRESTORE ────────────────────────────────────────────────
+async function saveBeadToFirestore(base64) {
+  console.log("💾 Saving bead to Firestore...");
+  const ref = await db.collection("beads").add({
+    base64,
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  console.log("✅ Bead saved! ID:", ref.id);
+  return ref.id;
+}
+
+// ── SAVE BRACELET LAYOUT ──────────────────────────────────────────────────────
+window.saveBraceletLayout = async function () {
+  const filled = beads.filter(Boolean);
+  if (!filled.length) { toast("⚠️ Place at least one bead on the bracelet first!", true); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+  try {
+    const layout = beads.map(b => {
+      if (!b) return null;
+      const found = palette.find(p => p.base64 === b);
+      return found ? found.id : null;
+    });
+    const ref = await db.collection("bracelets").add({
+      layout,
+      beadData: beads,
+      filledCount: filled.length,
+      savedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    console.log("✅ Bracelet saved! ID:", ref.id);
+    toast(`💎 Bracelet saved! ${filled.length} beads placed.`);
+  } catch (e) {
+    console.error("❌ Error:", e);
+    toast("❌ " + e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Save Bracelet Layout';
+  }
+};
+
+// ── UPLOAD ────────────────────────────────────────────────────────────────────
+window.handleUpload = function (e) {
+  const f = e.target.files[0];
+  if (!f || !f.type.startsWith('image/')) { toast("Please upload an image", true); return; }
+  const r = new FileReader();
+  r.onload = ev => openEditor(ev.target.result);
+  r.readAsDataURL(f);
+  e.target.value = '';
+};
+
+// ── IMAGE EDITOR MODAL ────────────────────────────────────────────────────────
+function openEditor(src) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h3>✂️ Crop Bead Image</h3>
+      <div class="modal-canvas-wrap">
+        <canvas id="edCvs" width="340" height="340"></canvas>
+        <div class="modal-circle-mask"></div>
+      </div>
+      <span class="modal-label">🔍 ZOOM</span>
+      <input type="range" class="modal-slider" id="edZoom" min="0.3" max="3" step="0.05" value="1">
+      <span class="modal-label">🔄 ROTATE</span>
+      <input type="range" class="modal-slider" id="edRot" min="0" max="360" step="1" value="0">
+      <div class="modal-actions">
+        <button class="btn-cancel" id="edCancel">Cancel</button>
+        <button class="btn-add" id="edSave">✨ Add Bead</button>
+      </div>
+      <div class="saving-indicator" id="savingMsg"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const cvs = document.getElementById('edCvs');
+  const ctx = cvs.getContext('2d');
+  const img = new Image();
+  let sc=1, ro=0, px=170, py=170, drag=false, sx, sy;
+
+  function draw() {
+    ctx.clearRect(0,0,340,340);
+    ctx.save(); ctx.translate(px,py); ctx.rotate(ro*Math.PI/180); ctx.scale(sc,sc);
+    ctx.drawImage(img,-img.width/2,-img.height/2); ctx.restore();
+  }
+  img.onload = draw; img.src = src;
+
+  document.getElementById('edZoom').oninput = e => { sc=+e.target.value; draw(); };
+  document.getElementById('edRot').oninput  = e => { ro=+e.target.value; draw(); };
+  cvs.onmousedown = e => { drag=true; const r=cvs.getBoundingClientRect(); sx=e.clientX-r.left-px; sy=e.clientY-r.top-py; };
+  cvs.onmousemove = e => { if(!drag)return; const r=cvs.getBoundingClientRect(); px=e.clientX-r.left-sx; py=e.clientY-r.top-sy; draw(); };
+  cvs.onmouseup = () => drag=false;
+  document.getElementById('edCancel').onclick = () => overlay.remove();
+
+  document.getElementById('edSave').onclick = async () => {
+    const addBtn = document.getElementById('edSave');
+    const msgEl  = document.getElementById('savingMsg');
+    addBtn.disabled = true; addBtn.textContent = '⏳ Saving…';
+    msgEl.textContent = 'Saving bead to database…';
+
+    // Crop centre circle from canvas
+    const out = document.createElement('canvas');
+    out.width = out.height = 150;
+    const oc = out.getContext('2d');
+    oc.beginPath(); oc.arc(75,75,75,0,Math.PI*2); oc.clip();
+    oc.drawImage(cvs, 85, 85, 170, 170, 0, 0, 150, 150);
+    const base64 = out.toDataURL('image/jpeg', 0.75);
+
+    try {
+      const docId = await saveBeadToFirestore(base64);
+      msgEl.textContent = '✅ Saved to database!';
+
+      const item = { id: docId, base64 };
+      palette.push(item);
+      addPaletteItem(item);
+      updateBeadCount(palette.length);
+      toast(`✨ Bead saved! You now have ${palette.length} bead${palette.length>1?'s':''}.`);
+
+      setTimeout(() => overlay.remove(), 800);
+    } catch (e) {
+      console.error("❌ Failed:", e);
+      msgEl.textContent = '❌ Failed: ' + e.message;
+      addBtn.disabled = false; addBtn.textContent = '✨ Add Bead';
+    }
+  };
+}
+
+// ── PALETTE ───────────────────────────────────────────────────────────────────
+function addPaletteItem(item) {
+  const g = document.getElementById('paletteGrid');
+  // Remove empty/loading placeholder if present
+  const placeholder = g.querySelector('.palette-loading, div[style*="grid-column"]');
+  if (placeholder) placeholder.remove();
+
+  const pb = document.createElement('div');
+  pb.className = 'palette-bead';
+  pb.dataset.id = item.id;
+  pb.style.backgroundImage = `url(${item.base64})`;
+  pb.title = `Bead ID: ${item.id.slice(0,8)}…`;
+  pb.addEventListener('click', () => pickPalette(item.base64, pb));
+  g.appendChild(pb);
+}
+
+function pickPalette(b64, el) {
+  document.querySelectorAll('.palette-bead').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selImg = b64;
+  if (selPos !== null) place(selPos, b64);
+  else toast("Now click a bead number on the bracelet to place it");
+}
+
+// ── POSITION SLOTS ────────────────────────────────────────────────────────────
+function buildSlots() {
+  const g = document.getElementById('positionGrid'); g.innerHTML='';
+  for (let i=0; i<TOTAL; i++) {
+    const s = document.createElement('div'); s.className='position-slot'; s.dataset.p=i;
+    drawSlot(s,i); s.addEventListener('click',()=>pickSlot(i)); g.appendChild(s);
+  }
+}
+function drawSlot(s,i) {
+  s.innerHTML=''; s.classList.toggle('filled',!!beads[i]);
+  if (beads[i]) { const p=document.createElement('div'); p.className='slot-preview'; p.style.backgroundImage=`url(${beads[i]})`; s.appendChild(p); }
+  else s.textContent=i+1;
+}
+function refreshSlots() {
+  document.querySelectorAll('.position-slot').forEach((s,i)=>{ s.classList.toggle('selected',i===selPos); drawSlot(s,i); });
+}
+function pickSlot(i) {
+  selPos=i; refreshSlots();
+  if (selImg) place(i,selImg); else toast("Now select a bead from the palette above");
+}
+
+// ── BRACELET VIEWS ────────────────────────────────────────────────────────────
+function buildCircle() {
+  const wrap=document.getElementById('braceletCircle'); if(!wrap)return;
+  wrap.innerHTML='';
+  const clasp=document.createElement('div'); clasp.className='bracelet-clasp'; wrap.appendChild(clasp);
+  for (let i=0; i<TOTAL; i++) {
+    const el=document.createElement('div'); el.className='circle-bead'; el.dataset.i=i;
+    const angle=(i/TOTAL)*2*Math.PI-Math.PI/2;
+    el.style.left=(200+155*Math.cos(angle)-26)+'px';
+    el.style.top=(200+155*Math.sin(angle)-26)+'px';
+    const rot=(angle*180/Math.PI)+90;
+    el.style.transform=`rotate(${rot}deg)`;
+    if (beads[i]) { el.classList.add('has-image'); el.style.backgroundImage=`url(${beads[i]})`; }
+    else { el.classList.add('empty'); const sp=document.createElement('span'); sp.textContent=i+1; sp.style.transform=`rotate(-${rot}deg)`; sp.style.display='inline-block'; el.appendChild(sp); }
+    el.addEventListener('click',()=>onBeadClick(i)); wrap.appendChild(el);
+  }
+}
+function onBeadClick(i) {
+  document.querySelectorAll('.circle-bead').forEach(b=>b.classList.remove('selected'));
+  document.querySelector(`.circle-bead[data-i="${i}"]`).classList.add('selected');
+  selPos=i;
+  if (selImg) place(i,selImg); else toast("Now pick a bead from the palette →");
+}
+function buildFlat() {
+  const wrap=document.querySelector('.product-bracelet'); if(!wrap)return;
+  wrap.querySelectorAll('.product-bead').forEach(b=>b.remove());
+  for (let i=0; i<TOTAL; i++) {
+    if (!beads[i]) continue;
+    const b=document.createElement('div'); b.className='product-bead';
+    b.style.backgroundImage=`url(${beads[i]})`; b.style.left=`${(i/(TOTAL-1))*100}%`;
+    wrap.appendChild(b);
+  }
+}
+function refreshViews() { curView==='circle'?buildCircle():buildFlat(); refreshSlots(); }
+window.switchView=function(v,btn){
+  curView=v;
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelector('.circle-view').classList.toggle('active',v==='circle');
+  document.querySelector('.flat-product').classList.toggle('active',v==='flat');
+  refreshViews();
+};
+function place(pos,b64) {
+  beads[pos]=b64; refreshViews();
+  toast(`✨ Bead placed at position ${pos+1}!`);
+  selPos=null; selImg=null;
+  document.querySelectorAll('.palette-bead').forEach(b=>b.classList.remove('active'));
+}
+window.clearBracelet=function(){
+  if(!confirm("Clear all beads from the bracelet?"))return;
+  beads=Array(TOTAL).fill(null); refreshViews(); toast("Bracelet cleared!");
+};
+
+// ── QR ────────────────────────────────────────────────────────────────────────
+window.generateQR=async function(){
+  const msg=document.getElementById('message').value.trim();
+  const date=document.getElementById('unlockDate').value;
+  if(!msg){toast("Please enter a message!",true);return;}
+  if(msgType==='locked'&&!date){toast("Please pick an unlock date!",true);return;}
+  const data={text:msg,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+  if(msgType==='locked') data.unlockAt=new Date(date);
+  const ref=await db.collection("qrMessages").add(data);
+  const url=`https://charmsync.web.app/view.html?id=${ref.id}`;
+  document.getElementById('qrcode').innerHTML='';
+  new QRCode(document.getElementById('qrcode'),{text:url,width:220,height:220,colorDark:"#2A2A2A",colorLight:"#fff",correctLevel:QRCode.CorrectLevel.H});
+  document.querySelector('.qr-container').classList.add('show');
+  toast(msgType==='instant'?"✨ QR Code created!":"🔒 Message locked until set date.");
+};
+window.downloadQR=function(){
+  const c=document.querySelector('#qrcode canvas'); if(!c)return;
+  const a=document.createElement('a'); a.download='charmsync-qr.png'; a.href=c.toDataURL(); a.click();
+};
+window.setMessageType=function(type,btn){
+  msgType=type;
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  document.querySelector('.date-input-wrapper').classList.toggle('show',type==='locked');
+};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function toast(msg,err=false){
+  const n=document.createElement('div'); n.className='toast'+(err?' err':''); n.textContent=msg;
+  document.body.appendChild(n); setTimeout(()=>n.classList.add('show'),10);
+  setTimeout(()=>{n.classList.remove('show');setTimeout(()=>n.remove(),300);},3500);
+}
+window.showPage=function(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+};
+function createParticles(){
+  const c=document.querySelector('.particles');
+  for(let i=0;i<20;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.top=Math.random()*100+'%';p.style.animationDelay=Math.random()*15+'s';p.style.animationDuration=(10+Math.random()*10)+'s';c.appendChild(p);}
+}
+
+// ── INIT — load beads from Firestore first ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  createParticles();
+  buildCircle();
+  buildSlots();
+  buildFlat();
+  // Fetch saved beads from Firestore and populate palette
+  await loadBeadsFromFirestore();
+});
+</script>
 </body>
 </html>
