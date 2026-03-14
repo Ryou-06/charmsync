@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CharmSync - Create Memory Charms</title>
+  <title>CharmSync - Realistic Bracelet Designer</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <style>
     :root {
@@ -36,7 +37,6 @@
       overflow-x: hidden;
     }
 
-    /* Floating particles background */
     .particles {
       position: fixed;
       top: 0;
@@ -69,7 +69,6 @@
       min-height: 100vh;
     }
 
-    /* Sidebar */
     .sidebar {
       width: 280px;
       background: rgba(255, 255, 255, 0.7);
@@ -95,12 +94,6 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 8px;
-      animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
     }
 
     .logo p {
@@ -125,23 +118,6 @@
       border-radius: 16px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       text-align: left;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .nav-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(232, 180, 168, 0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .nav-btn:hover::before {
-      left: 100%;
     }
 
     .nav-btn:hover {
@@ -155,11 +131,10 @@
       box-shadow: var(--soft-shadow);
     }
 
-    /* Main content */
     .main {
       flex: 1;
       padding: 60px 80px;
-      max-width: 900px;
+      max-width: 1400px;
     }
 
     .page {
@@ -187,7 +162,7 @@
     .subtitle {
       font-size: 16px;
       color: var(--deep-rose);
-      margin-bottom: 50px;
+      margin-bottom: 40px;
       line-height: 1.6;
     }
 
@@ -278,49 +253,6 @@
       opacity: 1;
     }
 
-    .primary-btn {
-      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
-      color: white;
-      border: none;
-      padding: 18px 40px;
-      border-radius: 12px;
-      font-family: 'Manrope', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: var(--soft-shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .primary-btn::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .primary-btn:hover::after {
-      width: 300px;
-      height: 300px;
-    }
-
-    .primary-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(200, 159, 165, 0.3);
-    }
-
-    .primary-btn:active {
-      transform: translateY(0);
-    }
-
     /* QR Code display */
     .qr-container {
       margin-top: 40px;
@@ -379,65 +311,504 @@
       color: white;
     }
 
-    /* Bracelet styling */
-    .bracelet-container {
+    /* Designer Layout */
+    .designer-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 30px;
+      align-items: start;
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+      background: white;
+      padding: 8px;
+      border-radius: 16px;
+      box-shadow: var(--soft-shadow);
+      width: fit-content;
+    }
+
+    .view-btn {
+      padding: 12px 24px;
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--charcoal);
+      transition: all 0.3s ease;
+    }
+
+    .view-btn.active {
+      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
+      color: white;
+    }
+
+    /* Bracelet Container */
+    .bracelet-view {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: var(--soft-shadow);
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Circle View */
+    .circle-view {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .circle-view.active {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 60px;
     }
 
-    .bracelet {
+    .bracelet-circle {
       position: relative;
-      width: 360px;
-      height: 360px;
-      animation: gentleRotate 30s infinite linear;
+      width: 400px;
+      height: 400px;
     }
 
-    @keyframes gentleRotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    /* Wrist placeholder in center */
+    .bracelet-circle::before {
+      content: 'WRIST';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, rgba(243, 235, 225, 0.6) 0%, rgba(243, 235, 225, 0.3) 60%, transparent 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 300;
+      color: rgba(42, 42, 42, 0.15);
+      letter-spacing: 3px;
+      border: 2px dashed rgba(200, 159, 165, 0.15);
     }
 
-    .bracelet::before {
+    /* Bracelet chain/string */
+    .bracelet-circle::after {
       content: '';
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 280px;
-      height: 280px;
-      border: 2px dashed rgba(232, 180, 168, 0.3);
+      width: 310px;
+      height: 310px;
+      border: 4px solid transparent;
       border-radius: 50%;
+      background: 
+        linear-gradient(white, white) padding-box,
+        repeating-linear-gradient(
+          90deg,
+          #D4AF37 0px,
+          #F4E5C2 2px,
+          #D4AF37 4px,
+          #C19A6B 6px,
+          #D4AF37 8px
+        ) border-box;
+      box-shadow: 
+        0 0 0 1px rgba(212, 175, 55, 0.3),
+        inset 0 2px 4px rgba(0, 0, 0, 0.1),
+        0 3px 8px rgba(212, 175, 55, 0.3);
+      z-index: 0;
     }
 
-    .bead {
+    .circle-bead {
       position: absolute;
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 3px solid var(--rose-gold);
+      background: white;
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 4px 12px rgba(200, 159, 165, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--deep-rose);
+      z-index: 1;
+    }
+
+    .circle-bead.empty {
+      background: linear-gradient(135deg, #f8f8f8, #ffffff);
+      border-style: dashed;
+      border-color: var(--deep-rose);
+      box-shadow: 
+        0 2px 8px rgba(200, 159, 165, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    .circle-bead:hover {
+      transform: scale(1.15);
+      box-shadow: 
+        0 8px 20px rgba(200, 159, 165, 0.5), 
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        var(--glow);
+      z-index: 10;
+    }
+
+    .circle-bead.selected {
+      border-color: var(--lavender);
+      border-width: 4px;
+      box-shadow: 
+        0 0 20px rgba(180, 168, 232, 0.8),
+        0 6px 16px rgba(180, 168, 232, 0.4);
+      animation: selectedPulse 1.5s infinite;
+    }
+
+    @keyframes selectedPulse {
+      0%, 100% { transform: scale(1.1); }
+      50% { transform: scale(1.2); box-shadow: 0 0 30px rgba(180, 168, 232, 1); }
+    }
+
+    .circle-bead.has-image {
+      border-color: var(--rose-gold);
+      border-style: solid;
+      box-shadow: 
+        0 6px 16px rgba(200, 159, 165, 0.5),
+        0 3px 6px rgba(0, 0, 0, 0.3),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Clasp decoration */
+    .bracelet-clasp {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 12px;
+      background: linear-gradient(135deg, #D4AF37, #F4E5C2, #D4AF37);
+      border-radius: 6px;
+      box-shadow: 
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.5);
+      z-index: 2;
+    }
+
+    .bracelet-clasp::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #C19A6B;
+      border-radius: 50%;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Flat Product View */
+    .flat-product {
+      display: none;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .flat-product.active {
+      display: block;
+    }
+
+    .product-stage {
+      background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+      border-radius: 20px;
+      padding: 60px;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    .product-bracelet {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      padding-bottom: 50%;
+    }
+
+    .product-chain {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, 
+        #D4AF37 0%, #F4E5C2 25%, #D4AF37 50%, #F4E5C2 75%, #D4AF37 100%);
+      transform: translateY(-50%);
+      border-radius: 4px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-bead {
+      position: absolute;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      border: 3px solid #D4AF37;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    /* Bead Palette */
+    .bead-palette {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--soft-shadow);
+      position: sticky;
+      top: 20px;
+    }
+
+    .palette-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+
+    .palette-subtitle {
+      font-size: 13px;
+      color: var(--deep-rose);
+      margin-bottom: 25px;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .palette-bead {
+      width: 100%;
+      aspect-ratio: 1;
       border-radius: 50%;
       border: 3px solid var(--rose-gold);
       background-size: cover;
       background-position: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(200, 159, 165, 0.3);
-      animation: pulse 2s infinite ease-in-out;
+      box-shadow: 0 2px 8px rgba(200, 159, 165, 0.2);
+      position: relative;
     }
 
-    .bead:hover {
-      transform: scale(1.3);
-      box-shadow: 0 8px 25px rgba(200, 159, 165, 0.5), var(--glow);
-      z-index: 10;
-      animation: none;
+    .palette-bead::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 3px solid var(--lavender);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .palette-bead:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(200, 159, 165, 0.4);
+    }
+
+    .palette-bead.active::after {
+      opacity: 1;
+      animation: pulse 1.5s infinite;
     }
 
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
     }
 
-    /* Success message */
+    .bead-number {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: var(--lavender);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .position-selector {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid rgba(232, 180, 168, 0.2);
+    }
+
+    .position-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .position-slot {
+      aspect-ratio: 1;
+      border: 2px dashed var(--deep-rose);
+      border-radius: 50%;
+      background: rgba(232, 180, 168, 0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--deep-rose);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .position-slot:hover {
+      background: rgba(232, 180, 168, 0.15);
+      border-color: var(--rose-gold);
+      transform: scale(1.1);
+    }
+
+    .position-slot.filled {
+      border-style: solid;
+      border-color: var(--rose-gold);
+      border-width: 3px;
+    }
+
+    .position-slot.selected {
+      border-color: var(--lavender);
+      border-width: 3px;
+      box-shadow: 0 0 15px rgba(180, 168, 232, 0.5);
+      animation: selectedPulse 1.5s infinite;
+    }
+
+    @keyframes selectedPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .slot-preview {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      border-radius: 50%;
+    }
+
+    .upload-section {
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 2px solid rgba(232, 180, 168, 0.2);
+    }
+
+    .upload-btn {
+      width: 100%;
+      padding: 14px;
+      border: 2px dashed var(--rose-gold);
+      background: rgba(232, 180, 168, 0.05);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--charcoal);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .upload-btn:hover {
+      background: rgba(232, 180, 168, 0.15);
+      border-style: solid;
+    }
+
+    .action-buttons {
+      margin-top: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--rose-gold), var(--deep-rose));
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(200, 159, 165, 0.3);
+    }
+
+    .clear-btn {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s ease;
+    }
+
+    .clear-btn:hover {
+      background: #f5f5f5;
+      border-color: #ccc;
+    }
+
+    .view-controls {
+      margin-top: 20px;
+      text-align: center;
+      color: var(--deep-rose);
+      font-size: 13px;
+    }
+
     .success-msg {
       position: fixed;
       top: 30px;
@@ -459,20 +830,26 @@
       transform: translateY(0);
     }
 
+    @media (max-width: 1024px) {
+      .designer-layout {
+        grid-template-columns: 1fr;
+      }
+      .bead-palette {
+        position: static;
+      }
+    }
+
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
       }
-
       .sidebar {
         width: 100%;
         padding: 20px;
       }
-
       .main {
         padding: 30px 20px;
       }
-
       h2 {
         font-size: 32px;
       }
@@ -496,7 +873,25 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let messageType = 'instant'; // 'instant' or 'locked'
+    // Sample bead images (replace with your actual bead images)
+    const beadImages = [
+      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1583937443569-f14a36c02707?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=100&h=100&fit=crop",
+      "https://images.unsplash.com/photo-1617646773925-da6c4c935e27?w=100&h=100&fit=crop",
+    ];
+
+    const totalBeads = 14;
+    let braceletBeads = Array(totalBeads).fill(null);
+    let selectedBeadImage = null;
+    let selectedPosition = null;
+    let currentView = 'circle';
+    let messageType = 'instant';
 
     // Save message with optional unlock date
     async function saveMessage(message, unlockDateStr = null) {
@@ -506,7 +901,6 @@
           createdAt: serverTimestamp()
         };
 
-        // Only add unlockAt if it's a locked message
         if (unlockDateStr) {
           messageData.unlockAt = new Date(unlockDateStr);
         }
@@ -545,7 +939,6 @@
 
       const qrUrl = `https://charmsync.web.app/view.html?id=${docId}`;
 
-      // Generate QR code
       document.getElementById("qrcode").innerHTML = "";
       new QRCode(document.getElementById("qrcode"), {
         text: qrUrl,
@@ -579,37 +972,6 @@
       showNotification("QR Code downloaded!");
     };
 
-    // Copy URL
-    window.copyURL = function() {
-      const canvas = document.querySelector('#qrcode canvas');
-      if (!canvas) return;
-      
-      // Get the QR data URL from the QRCode library
-      const qrData = canvas.toDataURL();
-      const tempInput = document.createElement('input');
-      tempInput.value = document.querySelector('#qrcode img')?.getAttribute('src') || qrData;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempInput);
-      
-      showNotification("URL copied to clipboard!");
-    };
-
-    // Show notification
-    function showNotification(message, isSuccess = true) {
-      const notification = document.createElement('div');
-      notification.className = 'success-msg';
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => notification.classList.add('show'), 10);
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-      }, 3000);
-    }
-
     // Toggle message type
     window.setMessageType = function(type) {
       messageType = type;
@@ -626,7 +988,290 @@
       }
     };
 
-    // Page navigation
+    window.generateQR = generateQR;
+
+    // Setup Circle Bracelet View
+    function setupCircleView() {
+      const bracelet = document.getElementById("braceletCircle");
+      if (!bracelet) return;
+      
+      bracelet.innerHTML = "";
+      
+      // Add clasp decoration
+      const clasp = document.createElement("div");
+      clasp.className = "bracelet-clasp";
+      bracelet.appendChild(clasp);
+      
+      const radius = 155;
+      const center = 200;
+
+      for (let i = 0; i < totalBeads; i++) {
+        let bead = document.createElement("div");
+        bead.className = "circle-bead";
+        bead.dataset.index = i;
+
+        if (braceletBeads[i]) {
+          bead.classList.add('has-image');
+          bead.style.backgroundImage = `url(${braceletBeads[i]})`;
+        } else {
+          bead.classList.add('empty');
+          bead.textContent = i + 1;
+        }
+
+        // Position beads around circle
+        let angle = (i / totalBeads) * 2 * Math.PI - Math.PI / 2;
+        let x = center + radius * Math.cos(angle) - 26;
+        let y = center + radius * Math.sin(angle) - 26;
+        bead.style.left = x + "px";
+        bead.style.top = y + "px";
+
+        // Rotate beads to follow the curve naturally
+        let rotationAngle = (angle * 180 / Math.PI) + 90;
+        bead.style.transform = `rotate(${rotationAngle}deg)`;
+        
+        // Keep the content (number/image) upright
+        if (!braceletBeads[i]) {
+          bead.style.display = 'flex';
+          bead.style.alignItems = 'center';
+          bead.style.justifyContent = 'center';
+          const span = document.createElement('span');
+          span.textContent = i + 1;
+          span.style.transform = `rotate(-${rotationAngle}deg)`;
+          span.style.display = 'inline-block';
+          bead.innerHTML = '';
+          bead.appendChild(span);
+        }
+
+        bead.addEventListener("click", () => selectCircleBead(i));
+        bracelet.appendChild(bead);
+      }
+    }
+
+    function selectCircleBead(index) {
+      // Deselect all beads
+      document.querySelectorAll('.circle-bead').forEach(b => b.classList.remove('selected'));
+      
+      // Select the clicked bead
+      const beadElement = document.querySelector(`.circle-bead[data-index="${index}"]`);
+      beadElement.classList.add('selected');
+      selectedPosition = index;
+
+      // If a palette image is selected, apply it immediately
+      if (selectedBeadImage) {
+        placeBead(index, selectedBeadImage);
+      } else {
+        showNotification("Now select a bead design from the palette →");
+      }
+    }
+
+    function setupFlatProduct() {
+      const container = document.querySelector('.product-bracelet');
+      if (!container) return;
+
+      // Clear existing beads
+      const existingBeads = container.querySelectorAll('.product-bead');
+      existingBeads.forEach(b => b.remove());
+
+      for (let i = 0; i < totalBeads; i++) {
+        if (!braceletBeads[i]) continue;
+
+        const bead = document.createElement('div');
+        bead.className = 'product-bead';
+        bead.style.backgroundImage = `url(${braceletBeads[i]})`;
+        
+        // Distribute beads evenly
+        const percent = (i / (totalBeads - 1)) * 100;
+        bead.style.left = `${percent}%`;
+        
+        container.appendChild(bead);
+      }
+    }
+
+    function updateAllViews() {
+      if (currentView === 'circle') {
+        setupCircleView();
+      } else if (currentView === 'flat') {
+        setupFlatProduct();
+      }
+      updatePositionSlots();
+    }
+
+    window.switchView = function(view) {
+      currentView = view;
+      
+      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.querySelector('.circle-view').classList.toggle('active', view === 'circle');
+      document.querySelector('.flat-product').classList.toggle('active', view === 'flat');
+
+      updateAllViews();
+    };
+
+    function setupPalette() {
+      const paletteGrid = document.querySelector('.palette-grid');
+      if (!paletteGrid) return;
+
+      paletteGrid.innerHTML = "";
+      beadImages.forEach((imgUrl, index) => {
+        const paletteBead = document.createElement("div");
+        paletteBead.className = "palette-bead";
+        paletteBead.style.backgroundImage = `url(${imgUrl})`;
+        
+        paletteBead.addEventListener("click", () => selectPaletteBead(imgUrl, paletteBead));
+        paletteGrid.appendChild(paletteBead);
+      });
+    }
+
+    function selectPaletteBead(imgUrl, element) {
+      document.querySelectorAll('.palette-bead').forEach(b => b.classList.remove('active'));
+      element.classList.add('active');
+      selectedBeadImage = imgUrl;
+
+      if (selectedPosition !== null) {
+        placeBead(selectedPosition, imgUrl);
+      } else {
+        showNotification("Now click a position number to place this bead");
+      }
+    }
+
+    function setupPositionSlots() {
+      const positionGrid = document.querySelector('.position-grid');
+      if (!positionGrid) return;
+
+      positionGrid.innerHTML = '';
+      for (let i = 0; i < totalBeads; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'position-slot';
+        slot.dataset.position = i;
+        
+        if (braceletBeads[i]) {
+          slot.classList.add('filled');
+          const preview = document.createElement('div');
+          preview.className = 'slot-preview';
+          preview.style.backgroundImage = `url(${braceletBeads[i]})`;
+          slot.appendChild(preview);
+        } else {
+          slot.textContent = i + 1;
+        }
+
+        slot.addEventListener('click', () => selectPosition(i));
+        positionGrid.appendChild(slot);
+      }
+    }
+
+    function updatePositionSlots() {
+      const slots = document.querySelectorAll('.position-slot');
+      slots.forEach((slot, i) => {
+        slot.innerHTML = '';
+        slot.classList.remove('filled', 'selected');
+        
+        if (i === selectedPosition) {
+          slot.classList.add('selected');
+        }
+
+        if (braceletBeads[i]) {
+          slot.classList.add('filled');
+          const preview = document.createElement('div');
+          preview.className = 'slot-preview';
+          preview.style.backgroundImage = `url(${braceletBeads[i]})`;
+          slot.appendChild(preview);
+        } else {
+          slot.textContent = i + 1;
+        }
+      });
+    }
+
+    function selectPosition(position) {
+      selectedPosition = position;
+      updatePositionSlots();
+
+      if (selectedBeadImage) {
+        placeBead(position, selectedBeadImage);
+      } else {
+        showNotification("Now select a bead design from above");
+      }
+    }
+
+    function placeBead(position, imgUrl) {
+      braceletBeads[position] = imgUrl;
+      updateAllViews();
+      
+      showNotification(`✨ Bead placed at position ${position + 1}!`);
+      
+      selectedPosition = null;
+      selectedBeadImage = null;
+      document.querySelectorAll('.palette-bead').forEach(b => b.classList.remove('active'));
+      updatePositionSlots();
+    }
+
+    window.clearBracelet = function() {
+      if (!confirm("Clear all beads from your bracelet?")) return;
+      
+      braceletBeads = Array(totalBeads).fill(null);
+      updateAllViews();
+      showNotification("Bracelet cleared!");
+    };
+
+    window.saveBracelet = async function() {
+      try {
+        const filledBeads = braceletBeads.filter(b => b !== null).length;
+        if (filledBeads === 0) {
+          showNotification("Add some beads first!", false);
+          return;
+        }
+
+        await addDoc(collection(db, "bracelets"), {
+          beads: braceletBeads,
+          createdAt: serverTimestamp()
+        });
+        
+        showNotification(`💎 Bracelet design saved! (${filledBeads} beads)`);
+      } catch (error) {
+        console.error("Error saving bracelet:", error);
+        showNotification("Failed to save bracelet", false);
+      }
+    };
+
+    window.handleImageUpload = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showNotification("Please upload an image file", false);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imgUrl = e.target.result;
+        beadImages.push(imgUrl);
+        
+        const paletteGrid = document.querySelector('.palette-grid');
+        const paletteBead = document.createElement("div");
+        paletteBead.className = "palette-bead";
+        paletteBead.style.backgroundImage = `url(${imgUrl})`;
+        paletteBead.addEventListener("click", () => selectPaletteBead(imgUrl, paletteBead));
+        paletteGrid.appendChild(paletteBead);
+
+        showNotification("Custom bead added to palette!");
+      };
+      reader.readAsDataURL(file);
+    };
+
+    function showNotification(message, isSuccess = true) {
+      const notification = document.createElement('div');
+      notification.className = 'success-msg';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.classList.add('show'), 10);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
     window.showPage = function(pageId) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById(pageId).classList.add('active');
@@ -635,64 +1280,6 @@
       event.target.classList.add('active');
     };
 
-    window.generateQR = generateQR;
-
-    // Bracelet setup
-    const totalBeads = 14;
-    const radius = 140;
-    const center = 180;
-
-    const beadImages = [
-      "images/bead1.png",
-      "images/bead2.png",
-      "images/bead3.png",
-      "images/bead4.png"
-    ];
-
-    function setupBracelet() {
-      const bracelet = document.getElementById("bracelet");
-      if (!bracelet) return;
-      
-      bracelet.innerHTML = "";
-
-      for (let i = 0; i < totalBeads; i++) {
-        let bead = document.createElement("div");
-        bead.className = "bead";
-
-        let beadImage = beadImages[i % beadImages.length];
-        bead.style.backgroundImage = `url(${beadImage})`;
-        bead.style.animationDelay = `${i * 0.1}s`;
-
-        let angle = (i / totalBeads) * 2 * Math.PI - Math.PI / 2;
-        let x = center + radius * Math.cos(angle) - 24;
-        let y = center + radius * Math.sin(angle) - 24;
-        bead.style.left = x + "px";
-        bead.style.top = y + "px";
-
-        bead.addEventListener("click", async () => {
-          let newImage = prompt("Enter bead image URL:", beadImage);
-          if (newImage) {
-            bead.style.backgroundImage = `url(${newImage})`;
-            beadImage = newImage;
-            try {
-              await addDoc(collection(db, "bracelets"), {
-                beadIndex: i,
-                imageUrl: beadImage,
-                updatedAt: serverTimestamp()
-              });
-              showNotification("Bead updated!");
-            } catch (e) {
-              console.error(e);
-              showNotification("Failed to update bead", false);
-            }
-          }
-        });
-
-        bracelet.appendChild(bead);
-      }
-    }
-
-    // Create floating particles
     function createParticles() {
       const container = document.querySelector('.particles');
       for (let i = 0; i < 20; i++) {
@@ -708,15 +1295,21 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       createParticles();
-      setupBracelet();
-      
-      // Enter key support
-      document.getElementById("message").addEventListener("keydown", e => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          generateQR();
-        }
-      });
+      setupCircleView();
+      setupPalette();
+      setupPositionSlots();
+      setupFlatProduct();
+
+      // Enter key support for message textarea
+      const messageInput = document.getElementById("message");
+      if (messageInput) {
+        messageInput.addEventListener("keydown", e => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            generateQR();
+          }
+        });
+      }
     });
   </script>
 </head>
@@ -733,8 +1326,8 @@
       <button class="nav-btn active" onclick="showPage('qrPage')">
         ✨ Create Message
       </button>
-      <button class="nav-btn" onclick="showPage('braceletPage')">
-        💎 Bracelet Preview
+      <button class="nav-btn" onclick="showPage('designPage')">
+        💎 Design Bracelet
       </button>
     </div>
 
@@ -794,13 +1387,75 @@
         </div>
       </div>
 
-      <!-- Bracelet Preview Page -->
-      <div id="braceletPage" class="page">
-        <h2>Bracelet Preview</h2>
-        <p class="subtitle">Visualize your charm bracelet design. Click beads to customize.</p>
-        
-        <div class="bracelet-container">
-          <div class="bracelet" id="bracelet"></div>
+      <!-- Bracelet Designer Page -->
+      <div id="designPage" class="page">
+        <h2>Design Your Bracelet</h2>
+        <p class="subtitle">Create a realistic preview of your personalized charm bracelet</p>
+
+        <div class="view-toggle">
+          <button class="view-btn active" onclick="switchView('circle')">
+            ⭕ Circle View
+          </button>
+          <button class="view-btn" onclick="switchView('flat')">
+            📸 Product View
+          </button>
+        </div>
+
+        <div class="designer-layout">
+          <div class="bracelet-view">
+            <!-- Circle View -->
+            <div class="circle-view active">
+              <div class="bracelet-circle" id="braceletCircle"></div>
+            </div>
+
+            <!-- Product View -->
+            <div class="flat-product">
+              <div class="product-stage">
+                <div class="product-bracelet">
+                  <div class="product-chain"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="view-controls">
+              <p>💡 <strong>Circle View:</strong> Click beads to customize • Real chain & clasp • <strong>Product View:</strong> Professional photo style</p>
+            </div>
+          </div>
+
+          <div class="bead-palette">
+            <div class="palette-title">Bead Collection</div>
+            <p class="palette-subtitle">Select a bead design</p>
+            
+            <div class="palette-grid"></div>
+
+            <div class="position-selector">
+              <div class="palette-title" style="font-size: 18px;">Position</div>
+              <p class="palette-subtitle">Click a number to place bead</p>
+              <div class="position-grid"></div>
+            </div>
+
+            <div class="upload-section">
+              <label for="customBeadUpload" class="upload-btn">
+                📤 Upload Custom Bead
+              </label>
+              <input 
+                type="file" 
+                id="customBeadUpload" 
+                accept="image/*" 
+                onchange="handleImageUpload(event)"
+                style="display: none;"
+              >
+            </div>
+
+            <div class="action-buttons">
+              <button class="primary-btn" onclick="saveBracelet()">
+                💾 Save Design
+              </button>
+              <button class="clear-btn" onclick="clearBracelet()">
+                🗑️ Clear All
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
